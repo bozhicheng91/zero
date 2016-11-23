@@ -45,6 +45,7 @@ protected:
 	void centerthread();
 	void centroidthread();
 	void cloudmessagethread();
+	void DeleteModel();
 
 	protected slots:
 	void OpenCloudFileTriggered();
@@ -68,22 +69,29 @@ protected:
 	void CloudMessageTriggered();
 	void IndexChoseClicked(QTreeWidgetItem *item, int count);
 	void RefreshStarbar();
+
+protected:
+	void keyPressEvent(QKeyEvent *keyevent);
+	void keyReleaseEvent(QKeyEvent *keyevent);
+
+
+private:
+	int GetModelTypeCount(std::string modeltype);
+	void PCTRGB2PCT(PCTRGB& cloud_rgb, PCT& cloud);
 	
 
 private:
 	Ui::ZeroClass *ui;
 	// PCL显示器
 	boost::shared_ptr<PCLViewer> m_pclviewer;
-	// 视图中添加的点云计数
-	int m_model_count;
-	// 打开点云
-	bool m_opencloud;
+	// 视图中添加的模型及类型
+	std::map<int, string> m_models;
+	// 所选择的模型索引
+	int m_choose_model_index;
 	// 当前操作点云索引
 	int m_choose_cloud_index;
 	// 多个点云
 	std::vector<PCTRGB::Ptr> m_clouds;
-	// 打开mesh
-	bool m_openmesh;
 	// 当前操作三角网格索引
 	int m_choose_mesh_index;
 	// 多个三角网格

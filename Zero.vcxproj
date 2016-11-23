@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B12702AD-ABFB-343A-A199-8E24837244A3}</ProjectGuid>
+    <Keyword>Qt4VSv1.0</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>UNICODE;WIN32;WIN64;QT_DLL;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(PCL_ROOT)\include\pcl-1.8\;$(PCL_ROOT)\3rdParty\Boost\include\boost-1_59;$(PCL_ROOT)\3rdParty\Eigen\eigen3;$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\3rdParty\Qhull\include;$(PCL_ROOT)\3rdParty\VTK\include\vtk-7.0;$(PCL_ROOT)\service_log\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AdditionalOptions>-Zm459 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;$(PCL_ROOT)\3rdParty\Boost\lib;$(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\FLANN\lib;$(PCL_ROOT)\3rdParty\VTK\lib;$(PCL_ROOT)\3rdParty\Qhull\lib;$(PCL_ROOT)\service_log\lib\vs2013_x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>qtmaind.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Widgetsd.lib;libboost_atomic-vc120-mt-gd-1_59.lib;libboost_chrono-vc120-mt-gd-1_59.lib;libboost_container-vc120-mt-gd-1_59.lib;libboost_context-vc120-mt-gd-1_59.lib;libboost_coroutine-vc120-mt-gd-1_59.lib;libboost_date_time-vc120-mt-gd-1_59.lib;libboost_exception-vc120-mt-gd-1_59.lib;libboost_filesystem-vc120-mt-gd-1_59.lib;libboost_graph-vc120-mt-gd-1_59.lib;libboost_iostreams-vc120-mt-gd-1_59.lib;libboost_locale-vc120-mt-gd-1_59.lib;libboost_log-vc120-mt-gd-1_59.lib;libboost_log_setup-vc120-mt-gd-1_59.lib;libboost_math_c99-vc120-mt-gd-1_59.lib;libboost_math_c99f-vc120-mt-gd-1_59.lib;libboost_math_c99l-vc120-mt-gd-1_59.lib;libboost_math_tr1-vc120-mt-gd-1_59.lib;libboost_math_tr1f-vc120-mt-gd-1_59.lib;libboost_math_tr1l-vc120-mt-gd-1_59.lib;libboost_mpi-vc120-mt-gd-1_59.lib;libboost_prg_exec_monitor-vc120-mt-gd-1_59.lib;libboost_program_options-vc120-mt-gd-1_59.lib;libboost_random-vc120-mt-gd-1_59.lib;libboost_regex-vc120-mt-gd-1_59.lib;libboost_serialization-vc120-mt-gd-1_59.lib;libboost_signals-vc120-mt-gd-1_59.lib;libboost_system-vc120-mt-gd-1_59.lib;libboost_test_exec_monitor-vc120-mt-gd-1_59.lib;libboost_thread-vc120-mt-gd-1_59.lib;libboost_timer-vc120-mt-gd-1_59.lib;libboost_unit_test_framework-vc120-mt-gd-1_59.lib;libboost_wave-vc120-mt-gd-1_59.lib;libboost_wserialization-vc120-mt-gd-1_59.lib;flann-gd.lib;flann_cpp_s-gd.lib;flann_s-gd.lib;pcl_apps_debug.lib;pcl_common_debug.lib;pcl_features_debug.lib;pcl_filters_debug.lib;pcl_io_debug.lib;pcl_io_ply_debug.lib;pcl_kdtree_debug.lib;pcl_keypoints_debug.lib;pcl_ml_debug.lib;pcl_octree_debug.lib;pcl_outofcore_debug.lib;pcl_people_debug.lib;pcl_recognition_debug.lib;pcl_registration_debug.lib;pcl_sample_consensus_debug.lib;pcl_search_debug.lib;pcl_segmentation_debug.lib;pcl_simulation_debug.lib;pcl_stereo_debug.lib;pcl_surface_debug.lib;pcl_tracking_debug.lib;pcl_visualization_debug.lib;qhull-gd.lib;qhullcpp-gd.lib;qhullstatic-gd.lib;qhullstatic_r-gd.lib;qhull_p-gd.lib;qhull_r-gd.lib;vtkalglib-7.0-gd.lib;vtkChartsCore-7.0-gd.lib;vtkCommonColor-7.0-gd.lib;vtkCommonComputationalGeometry-7.0-gd.lib;vtkCommonCore-7.0-gd.lib;vtkCommonDataModel-7.0-gd.lib;vtkCommonExecutionModel-7.0-gd.lib;vtkCommonMath-7.0-gd.lib;vtkCommonMisc-7.0-gd.lib;vtkCommonSystem-7.0-gd.lib;vtkCommonTransforms-7.0-gd.lib;vtkDICOMParser-7.0-gd.lib;vtkDomainsChemistry-7.0-gd.lib;vtkDomainsChemistryOpenGL2-7.0-gd.lib;vtkexoIIc-7.0-gd.lib;vtkexpat-7.0-gd.lib;vtkFiltersAMR-7.0-gd.lib;vtkFiltersCore-7.0-gd.lib;vtkFiltersExtraction-7.0-gd.lib;vtkFiltersFlowPaths-7.0-gd.lib;vtkFiltersGeneral-7.0-gd.lib;vtkFiltersGeneric-7.0-gd.lib;vtkFiltersGeometry-7.0-gd.lib;vtkFiltersHybrid-7.0-gd.lib;vtkFiltersHyperTree-7.0-gd.lib;vtkFiltersImaging-7.0-gd.lib;vtkFiltersModeling-7.0-gd.lib;vtkFiltersParallel-7.0-gd.lib;vtkFiltersParallelImaging-7.0-gd.lib;vtkFiltersProgrammable-7.0-gd.lib;vtkFiltersSelection-7.0-gd.lib;vtkFiltersSMP-7.0-gd.lib;vtkFiltersSources-7.0-gd.lib;vtkFiltersStatistics-7.0-gd.lib;vtkFiltersTexture-7.0-gd.lib;vtkFiltersVerdict-7.0-gd.lib;vtkfreetype-7.0-gd.lib;vtkGeovisCore-7.0-gd.lib;vtkglew-7.0-gd.lib;vtkGUISupportQt-7.0-gd.lib;vtkGUISupportQtSQL-7.0-gd.lib;vtkhdf5-7.0-gd.lib;vtkhdf5_hl-7.0-gd.lib;vtkImagingColor-7.0-gd.lib;vtkImagingCore-7.0-gd.lib;vtkImagingFourier-7.0-gd.lib;vtkImagingGeneral-7.0-gd.lib;vtkImagingHybrid-7.0-gd.lib;vtkImagingMath-7.0-gd.lib;vtkImagingMorphological-7.0-gd.lib;vtkImagingSources-7.0-gd.lib;vtkImagingStatistics-7.0-gd.lib;vtkImagingStencil-7.0-gd.lib;vtkInfovisCore-7.0-gd.lib;vtkInfovisLayout-7.0-gd.lib;vtkInteractionImage-7.0-gd.lib;vtkInteractionStyle-7.0-gd.lib;vtkInteractionWidgets-7.0-gd.lib;vtkIOAMR-7.0-gd.lib;vtkIOCore-7.0-gd.lib;vtkIOEnSight-7.0-gd.lib;vtkIOExodus-7.0-gd.lib;vtkIOExport-7.0-gd.lib;vtkIOGeometry-7.0-gd.lib;vtkIOImage-7.0-gd.lib;vtkIOImport-7.0-gd.lib;vtkIOInfovis-7.0-gd.lib;vtkIOLegacy-7.0-gd.lib;vtkIOLSDyna-7.0-gd.lib;vtkIOMINC-7.0-gd.lib;vtkIOMovie-7.0-gd.lib;vtkIONetCDF-7.0-gd.lib;vtkIOParallel-7.0-gd.lib;vtkIOParallelXML-7.0-gd.lib;vtkIOPLY-7.0-gd.lib;vtkIOSQL-7.0-gd.lib;vtkIOVideo-7.0-gd.lib;vtkIOXML-7.0-gd.lib;vtkIOXMLParser-7.0-gd.lib;vtkjpeg-7.0-gd.lib;vtkjsoncpp-7.0-gd.lib;vtklibxml2-7.0-gd.lib;vtkmetaio-7.0-gd.lib;vtkNetCDF-7.0-gd.lib;vtkNetCDF_cxx-7.0-gd.lib;vtkoggtheora-7.0-gd.lib;vtkParallelCore-7.0-gd.lib;vtkpng-7.0-gd.lib;vtkproj4-7.0-gd.lib;vtkRenderingAnnotation-7.0-gd.lib;vtkRenderingContext2D-7.0-gd.lib;vtkRenderingContextOpenGL2-7.0-gd.lib;vtkRenderingCore-7.0-gd.lib;vtkRenderingFreeType-7.0-gd.lib;vtkRenderingImage-7.0-gd.lib;vtkRenderingLabel-7.0-gd.lib;vtkRenderingLOD-7.0-gd.lib;vtkRenderingOpenGL2-7.0-gd.lib;vtkRenderingQt-7.0-gd.lib;vtkRenderingVolume-7.0-gd.lib;vtkRenderingVolumeOpenGL2-7.0-gd.lib;vtksqlite-7.0-gd.lib;vtksys-7.0-gd.lib;vtktiff-7.0-gd.lib;vtkverdict-7.0-gd.lib;vtkViewsContext2D-7.0-gd.lib;vtkViewsCore-7.0-gd.lib;vtkViewsInfovis-7.0-gd.lib;vtkViewsQt-7.0-gd.lib;vtkzlib-7.0-gd.lib;log_service_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>UNICODE;WIN32;WIN64;QT_DLL;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat />
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <AdditionalDependencies>qtmain.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="GeneratedFiles\Debug\moc_zero.cpp" />
+    <ClCompile Include="GeneratedFiles\qrc_zero.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\modules\Zero_Common.cpp" />
+    <ClCompile Include="src\modules\Zero_IO.cpp" />
+    <ClCompile Include="src\modules\Zero_Pretreatment.cpp" />
+    <ClCompile Include="src\modules\Zero_Registration.cpp" />
+    <ClCompile Include="src\modules\Zero_Search.cpp" />
+    <ClCompile Include="src\modules\Zero_Surface.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="zero.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GeneratedFiles\ui_zero.h" />
+    <ClInclude Include="src\modules\Zero_Common.h" />
+    <ClInclude Include="src\modules\Zero_exports.h" />
+    <ClInclude Include="src\modules\Zero_IO.h" />
+    <ClInclude Include="src\modules\Zero_Pretreatment.h" />
+    <ClInclude Include="src\modules\Zero_Registration.h" />
+    <ClInclude Include="src\modules\Zero_Search.h" />
+    <ClInclude Include="src\modules\Zero_Surface.h" />
+    <ClInclude Include="src\utils\pcl_file.h" />
+    <ClInclude Include="stdafx.h" />
+    <CustomBuild Include="zero.h">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath);$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Moc%27ing zero.h...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB  "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtWidgets" "-I$(PCL_ROOT)\include\pcl-1.8" "-I$(PCL_ROOT)\3rdParty\Boost\include\boost-1_59" "-I$(PCL_ROOT)\3rdParty\Eigen\eigen3" "-I$(PCL_ROOT)\3rdParty\FLANN\include" "-I$(PCL_ROOT)\3rdParty\Qhull\include" "-I$(PCL_ROOT)\3rdParty\VTK\include\vtk-7.0" "-I$(PCL_ROOT)\service_log\include" "-fstdafx.h" "-f../../zero.h"</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\moc.exe;%(FullPath);$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Moc%27ing zero.h...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp" "-fstdafx.h" "-f../../zero.h"  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtWidgets"</Command>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="zero.ui">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Uic%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\uic.exe" -o ".\GeneratedFiles\ui_%(Filename).h" "%(FullPath)"</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Uic%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\uic.exe" -o ".\GeneratedFiles\ui_%(Filename).h" "%(FullPath)"</Command>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="zero.qrc">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(FullPath);%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Rcc%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\qrc_%(Filename).cpp;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\rcc.exe" -name "%(Filename)" -no-compress "%(FullPath)" -o .\GeneratedFiles\qrc_%(Filename).cpp</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(FullPath);%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Rcc%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\qrc_%(Filename).cpp;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\rcc.exe" -name "%(Filename)" -no-compress "%(FullPath)" -o .\GeneratedFiles\qrc_%(Filename).cpp</Command>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Zero.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties MocDir=".\GeneratedFiles\$(ConfigurationName)" UicDir=".\GeneratedFiles" RccDir=".\GeneratedFiles" lupdateOptions="" lupdateOnBuild="0" lreleaseOptions="" Qt5Version_x0020_x64="qt5.6" MocOptions="" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

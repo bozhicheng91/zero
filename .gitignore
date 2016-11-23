@@ -1,5 +1,4 @@
 Zero.sln
-zero.qrc
 zero.rc
 
 GeneratedFiles
@@ -7,9 +6,9 @@ ipch
 Resources
 
 x64
-Zero.ico
 Zero.v12.suo
-Zero.vcxproj
+
+Zero.sdf
 
 Zero.vcxproj.filters
 Zero.vcxproj.user
