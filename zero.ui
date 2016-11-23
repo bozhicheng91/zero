@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ZeroClass</class>
+ <widget class="QMainWindow" name="ZeroClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Zero</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QVTKWidget" name="pclviewerwidget" native="true"/>
+      </item>
+      <item>
+       <widget class="QProgressBar" name="progressBar">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>600</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>文件</string>
+    </property>
+    <addaction name="actionOpenCloud"/>
+    <addaction name="actionOpenMesh"/>
+    <addaction name="separator"/>
+    <addaction name="actionSaveCloud"/>
+    <addaction name="actionSaveMesh"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>预处理</string>
+    </property>
+    <widget class="QMenu" name="menuSimplify">
+     <property name="title">
+      <string>精简</string>
+     </property>
+     <addaction name="actionVoxeGridSimplify"/>
+     <addaction name="actionUniformSimplify"/>
+    </widget>
+    <addaction name="menuSimplify"/>
+    <addaction name="actionOuliterRemove"/>
+    <addaction name="actionUpSamplify"/>
+    <addaction name="actionComputeNormal"/>
+    <addaction name="actionSmoothNormal"/>
+   </widget>
+   <widget class="QMenu" name="menu_3">
+    <property name="title">
+     <string>重建</string>
+    </property>
+    <addaction name="actionPCLPossion"/>
+    <addaction name="actionPCLFast"/>
+   </widget>
+   <widget class="QMenu" name="menu_4">
+    <property name="title">
+     <string>工具</string>
+    </property>
+    <addaction name="actionMeasure"/>
+    <addaction name="actionPolePoint"/>
+    <addaction name="actionCenter"/>
+    <addaction name="actionCentroid"/>
+    <addaction name="actionCloudMessage"/>
+   </widget>
+   <widget class="QMenu" name="menu_5">
+    <property name="title">
+     <string>配准</string>
+    </property>
+    <widget class="QMenu" name="menuAutoICP">
+     <property name="title">
+      <string>AutoICP</string>
+     </property>
+     <addaction name="actionOriginICP"/>
+     <addaction name="actionNDTICP"/>
+    </widget>
+    <addaction name="menuAutoICP"/>
+   </widget>
+   <addaction name="menu"/>
+   <addaction name="menu_2"/>
+   <addaction name="menu_5"/>
+   <addaction name="menu_3"/>
+   <addaction name="menu_4"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QDockWidget" name="dockWidget">
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QTreeWidget" name="treeWidget">
+       <column>
+        <property name="text">
+         <string notr="true">1</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionOpenCloud">
+   <property name="text">
+    <string>打开点云</string>
+   </property>
+  </action>
+  <action name="actionSaveCloud">
+   <property name="text">
+    <string>保存点云</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>退出</string>
+   </property>
+  </action>
+  <action name="actionMeasure">
+   <property name="text">
+    <string>测距</string>
+   </property>
+  </action>
+  <action name="actionPolePoint">
+   <property name="text">
+    <string>极点</string>
+   </property>
+  </action>
+  <action name="actionCenter">
+   <property name="text">
+    <string>点云中心</string>
+   </property>
+  </action>
+  <action name="actionCentroid">
+   <property name="text">
+    <string>点云质心</string>
+   </property>
+  </action>
+  <action name="actionPCLPossion">
+   <property name="text">
+    <string>泊松重建</string>
+   </property>
+  </action>
+  <action name="actionPCLFast">
+   <property name="text">
+    <string>快速重建</string>
+   </property>
+  </action>
+  <action name="actionOuliterRemove">
+   <property name="text">
+    <string>移除离群点</string>
+   </property>
+  </action>
+  <action name="actionVoxeGridSimplify">
+   <property name="text">
+    <string>均匀精简</string>
+   </property>
+  </action>
+  <action name="actionUniformSimplify">
+   <property name="text">
+    <string>统一精简</string>
+   </property>
+  </action>
+  <action name="actionUpSamplify">
+   <property name="text">
+    <string>上采样</string>
+   </property>
+  </action>
+  <action name="actionComputeNormal">
+   <property name="text">
+    <string>计算法向量</string>
+   </property>
+  </action>
+  <action name="actionSmoothNormal">
+   <property name="text">
+    <string>光滑法向量</string>
+   </property>
+  </action>
+  <action name="actionOriginICP">
+   <property name="text">
+    <string>ICP</string>
+   </property>
+  </action>
+  <action name="actionNDTICP">
+   <property name="text">
+    <string>NDT</string>
+   </property>
+  </action>
+  <action name="actionOpenMesh">
+   <property name="text">
+    <string>打开三角网格</string>
+   </property>
+  </action>
+  <action name="actionSaveMesh">
+   <property name="text">
+    <string>保存三角网格</string>
+   </property>
+  </action>
+  <action name="actionCloudMessage">
+   <property name="text">
+    <string>点云信息</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QVTKWidget</class>
+   <extends>QWidget</extends>
+   <header>qvtkwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="zero.qrc"/>
+ </resources>
+ <connections/>
+</ui>
