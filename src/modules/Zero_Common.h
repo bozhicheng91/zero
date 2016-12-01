@@ -56,6 +56,28 @@ namespace zero
 			extract.setNegative(extract_flag);
 			extract.filter(cloud_extracted);
 		}
+
+		// 点云平均点云
+		template<typename PointT>
+		double PointCloudMeanD(pcl::PointCloud<PointT> &cloud)
+		{
+			pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
+			tree->setInputCloud(cloud.makeShared());
+			double d = 0.0;
+			int K = 2;
+			std::vector<int> Idx(K);
+			std::vector<float> Distance(K);
+			//srand(unsigned(time(0)));
+			for (size_t i = 0; i < cloud.size(); i++)
+			{
+				if (tree->nearestKSearch(cloud.points[i], K, Idx, Distance) > 0)
+					d += Distance[1];
+				std::vector<int>(Idx).swap(Idx);
+				std::vector<float>(Distance).swap(Distance);
+			}
+
+			return (d / cloud.size());
+		}
 	};
 
 	namespace zerocommon
@@ -105,6 +127,22 @@ namespace zero
 		//计算两个向量之间的欧氏距离
 		double ComputeEUDistance(const Eigen::Vector4f& first,
 			const Eigen::Vector4f& second);
+
+		// 点云平均距离
+		template<typename PointT>
+		double pointcloudmeand(pcl::PointCloud<PointT> &cloud)
+		{
+			double d = 0.0;
+			if (cloud.size() == 0)
+			{
+				return d;
+			}
+
+			zero::ZEROCommon common;
+			d = common.PointCloudMeanD(cloud);
+
+			return d;
+		}
 	}
 }
 

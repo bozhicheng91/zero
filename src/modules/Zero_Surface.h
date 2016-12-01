@@ -3,6 +3,7 @@
 #define ZERO_SURFACE_H_
 
 #include "src/modules/Zero_exports.h"
+#include "src/modules/Zero_Common.h"
 
 namespace zero
 {

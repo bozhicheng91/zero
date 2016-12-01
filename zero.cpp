@@ -26,7 +26,7 @@ Zero::Zero(QWidget *parent)
 {
 	ui->setupUi(this);
 	this->setWindowTitle(QString::fromLocal8Bit("三维ZERO"));
-
+	ui->dockWidget_para->hide();
 	// 初始化
 	Init();
 
@@ -61,6 +61,7 @@ void Zero::Init()
 	ui->pclviewerwidget->SetRenderWindow(m_pclviewer->getRenderWindow());
 	m_pclviewer->setupInteractor(ui->pclviewerwidget->GetInteractor(), ui->pclviewerwidget->GetRenderWindow());
 	ui->pclviewerwidget->update();
+	//刷新界面
 	qApp->processEvents();
 }
 
@@ -71,9 +72,9 @@ void Zero::Signals_Slots()
 	// 打开点云文件
 	connect(ui->actionOpenMesh, SIGNAL(triggered()), this, SLOT(OpenMeshFileTriggered()));
 	// 保存文件
-	connect(ui->actionSaveCloud, SIGNAL(triggered()), this, SLOT(OpenCloudTriggered()));
+	connect(ui->actionSaveCloud, SIGNAL(triggered()), this, SLOT(SaveCloudTriggered()));
 	// 保存文件
-	connect(ui->actionSaveMesh, SIGNAL(triggered()), this, SLOT(OpenMeshTriggered()));
+	connect(ui->actionSaveMesh, SIGNAL(triggered()), this, SLOT(SaveMeshTriggered()));
 	// 退出
 	connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
 
@@ -122,11 +123,15 @@ void Zero::opencloudfilethread()
 {
 	m_opreator_index = 1;
 	opencloudfile_success = 0;
-	m_pclviewer->removeAllShapes();
+	//区分打开模型和添加模型的区别. 打开模型时, 应将视图中原先存在的模型移除.
+	//m_pclviewer->removeAllShapes();
+
+	std::vector<PCTRGB::Ptr>().swap(m_clouds);
 
 	// 点云读取
-	for (size_t i = 0; i < m_openfile_list.size(); i++)
+		for (size_t i = 0; i < m_openfile_list.size(); i++)
 	{
+		//临时点云模型. 初始默认采用PCTRGB格式存储点云数据
 		PCTRGB::Ptr cloud_tmp(new PCTRGB);
 		int return_status;
 		std::string file = m_zhcode->fromUnicode(m_openfile_list[i]).data();
@@ -142,6 +147,7 @@ void Zero::opencloudfilethread()
 			return_status = zero::zeroio::LoadGPD(file, *cloud_tmp);
 
 		m_clouds.push_back(cloud_tmp);
+		qDebug() <<"cloud input successfully !!";
 		if (return_status != 0)
 		{
 			ui->statusBar->clearMessage();
@@ -155,10 +161,10 @@ void Zero::opencloudfilethread()
 		m_models[i] = modeltype;
 
 		// 显示点云
-		m_ss.str("");
-		m_ss << "cloud" << i;
-		m_pclviewer->addPointCloud(cloud_tmp, m_ss.str());
-		m_pclviewer->resetCamera();
+		//m_ss.str("");
+		//m_ss << "cloud" << i;
+		//m_pclviewer->addPointCloud(cloud_tmp, m_ss.str());
+		//m_pclviewer->resetCamera();
 	}
 
 	opencloudfile_success = 1;
@@ -300,14 +306,15 @@ void Zero::ndticpthread()
 	ndticp_success = 1;
 }
 
-void Zero::pclpossisonthread()
+void Zero::pclpossisonthread(pcl::PolygonMesh::Ptr mesh)
 {
+	qDebug() << "poisson reconstruction is begining !";
 	m_opreator_index = 13;
 	pclpossison_success = 0;
 
 	PCT::Ptr cloud(new PCT);
 	PCTRGB2PCT(*m_clouds[m_choose_cloud_index], *cloud);
-	pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
+	//pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
 	if (zero::zerosurface::PCLPossionReconstruct(cloud, *mesh) != 0)
 	{
 		pclpossison_success = -1;
@@ -315,12 +322,10 @@ void Zero::pclpossisonthread()
 	}
 
 	m_meshs.push_back(mesh);
-	int n = GetModelTypeCount("mesh");
-	m_ss.str(""); 
-	m_ss << "mesh" << n;
-	m_pclviewer->addPolygonMesh(*mesh, m_ss.str());
+	
 
 	pclpossison_success = 1;
+	qDebug() << "poisson reconstruction is done !";
 }
 
 void Zero::pclfastthread()
@@ -466,10 +471,23 @@ void Zero::OpenCloudFileTriggered()
 	m_log_message = m_zhcode->fromUnicode(QString("正在读取数据...")).data();
 	WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 
+	//区分打开模型和添加模型的区别. 打开模型时, 应将视图中原先存在的模型移除.
+	m_pclviewer->removeAllShapes();
+	//开辟一个新线程
 	std::thread opencloudthread(&Zero::opencloudfilethread, this);
-	opencloudthread.detach();
+	//opencloudthread.detach();
+	opencloudthread.join();
 
+	qDebug() << "m_clouds size is  " << m_clouds.size();
+	//将读入的文件添加到view中
+	for (int i = 0; i < m_clouds.size(); i++){
+		m_ss.str("");
+		m_ss << "cloud" << i;
+		m_pclviewer->addPointCloud(m_clouds[i], m_ss.str());
+		m_pclviewer->resetCamera();
+	}
 	// 增加文件目录
+	
 	for (int i = 0; i < m_openfile_list.size(); i++)
 	{
 		QStringList strlist = m_openfile_list[i].split(QRegExp("[\\/.]"));
@@ -516,6 +534,8 @@ void Zero::OpenMeshFileTriggered()
 	{
 		m_currentPath += paths[i];
 	}
+
+
 
 	while (ui->treeWidget->topLevelItemCount() > 0)
 	{
@@ -594,6 +614,7 @@ void Zero::NDTICPTriggered()
 
 void Zero::PCLPossisonTriggered()
 {
+	
 	if (m_clouds[m_choose_cloud_index]->size() < 3)
 	{
 		ui->statusBar->clearMessage();
@@ -603,10 +624,21 @@ void Zero::PCLPossisonTriggered()
 		return;
 	}
 
-	ui->statusBar->clearMessage();
-	ui->statusBar->showMessage(QString::fromLocal8Bit("正在重建 ..."));
-	std::thread meshtd(&Zero::pclpossisonthread, this);
-	meshtd.detach();
+
+	//添加dock参数面板
+
+	ui->dockWidget_para->show();
+	//开启一个子进程.
+
+	pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
+	std::thread meshtd(&Zero::pclpossisonthread, this, mesh);
+	//将子进程从主进程中分离, 不再受主进程控制
+	meshtd.join();
+	int n = GetModelTypeCount("mesh");
+	m_ss.str("");
+	m_ss << "mesh" << n;
+	m_pclviewer->addPolygonMesh(*mesh, m_ss.str());
+	
 }
 
 void Zero::PCLFastTriggered()

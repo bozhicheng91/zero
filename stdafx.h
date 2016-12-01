@@ -3,3 +3,4 @@
 #include <service_log.h>
 #include <string>
 #include <thread>
+#include <QDebug>

@@ -23,6 +23,7 @@
 
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/integral_image_normal.h>
+#include <pcl/features/normal_3d_omp.h>
 
 #include <pcl/segmentation/sac_segmentation.h>
 

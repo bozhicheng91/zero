@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>400</height>
+    <width>585</width>
+    <height>635</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,7 +36,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>600</width>
+     <width>585</width>
      <height>23</height>
     </rect>
    </property>
@@ -122,6 +122,12 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QTreeWidget" name="treeWidget">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>100</height>
+        </size>
+       </property>
        <column>
         <property name="text">
          <string notr="true">1</string>
@@ -130,6 +136,35 @@
       </widget>
      </item>
     </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_para">
+   <property name="minimumSize">
+    <size>
+     <width>196</width>
+     <height>38</height>
+    </size>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dock_para">
+    <widget class="QFrame" name="frame">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>171</width>
+       <height>241</height>
+      </rect>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+    </widget>
    </widget>
   </widget>
   <action name="actionOpenCloud">

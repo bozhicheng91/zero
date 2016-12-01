@@ -5,6 +5,7 @@
 #include <vtkRenderWindow.h>
 
 #include <QtWidgets/QMainWindow>
+#include <QDockWidget>  
 #include "ui_zero.h"
 #include "src/modules/Zero_Common.h"
 #include "src/modules/Zero_IO.h"
@@ -38,7 +39,7 @@ protected:
 	void smoothnormalthread();
 	void originicpthread();
 	void ndticpthread();
-	void pclpossisonthread();
+	void pclpossisonthread(pcl::PolygonMesh::Ptr mesh);
 	void pclfastthread();
 	void measurethread();
 	void polepointthread();
