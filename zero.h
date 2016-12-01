@@ -48,6 +48,11 @@ protected:
 	void cloudmessagethread();
 	void DeleteModel();
 
+
+	void pclpoissonParaSet();
+
+
+
 	protected slots:
 	void OpenCloudFileTriggered();
 	void OpenMeshFileTriggered();

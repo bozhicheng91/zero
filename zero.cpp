@@ -623,21 +623,8 @@ void Zero::PCLPossisonTriggered()
 		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 		return;
 	}
+	pclpoissonParaSet();
 
-
-	//添加dock参数面板
-
-	ui->dockWidget_para->show();
-	//开启一个子进程.
-
-	pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
-	std::thread meshtd(&Zero::pclpossisonthread, this, mesh);
-	//将子进程从主进程中分离, 不再受主进程控制
-	meshtd.join();
-	int n = GetModelTypeCount("mesh");
-	m_ss.str("");
-	m_ss << "mesh" << n;
-	m_pclviewer->addPolygonMesh(*mesh, m_ss.str());
 	
 }
 
@@ -877,4 +864,78 @@ void Zero::PCTRGB2PCT(PCTRGB& cloud_rgb, PCT& cloud)
 		PTRGB p = cloud_rgb.points[i];
 		cloud.points.push_back(PT(p.x, p.y, p.z));
 	}
+}
+
+
+void Zero::pclpoissonParaSet(){
+	
+	//添加dock参数面板
+	ui->dockWidget_para->show();
+	ui->dockWidget_para->setWindowTitle(QStringLiteral("poisson 参数设定"));
+	//cleargridlayout(ui.gridLayout);
+
+	QLabel *label_1 = new QLabel();
+	label_1->setObjectName("label1");
+	label_1->setText(QStringLiteral("setDepth"));
+	ui->gridLayout_para->addWidget(label_1, 0, 0, 1, 1);
+	
+
+
+	QDoubleSpinBox *doublespinbox1 = new QDoubleSpinBox();
+	doublespinbox1->setObjectName("doublespinbox1");
+	doublespinbox1->setMinimum(-100.0);
+	doublespinbox1->setMaximum(100);
+	ui->gridLayout_para->addWidget(doublespinbox1, 0, 1, 1, 1);
+
+	
+	//ui->gridLayout_para->setSpacing(10);    //水平间隔
+
+	QLabel *label_2 = new QLabel();
+	label_2->setObjectName("label2");
+	label_2->setText(QStringLiteral("setSamplesPerNode"));
+	ui->gridLayout_para->addWidget(label_2, 1, 0,1 ,1);
+
+	QDoubleSpinBox *doublespinbox2 = new QDoubleSpinBox();
+	doublespinbox2->setObjectName("doublespinbox2");
+	doublespinbox2->setMinimum(-100.0);
+	doublespinbox2->setMaximum(100);
+	ui->gridLayout_para->addWidget(doublespinbox2, 1, 1, 1,1);
+
+
+	QLabel *label_3 = new QLabel();
+	label_3->setObjectName("label3");
+	label_3->setText(QStringLiteral("setConfidence"));
+	ui->gridLayout_para->addWidget(label_3, 2, 0, 1, 1);
+
+	QComboBox *choice_type = new QComboBox();
+	choice_type->addItem("True");
+	choice_type->addItem("False");
+	ui->gridLayout_para->addWidget(choice_type, 2, 1, 1, 1);
+
+	QPushButton *yesButton = new QPushButton();
+	yesButton->setObjectName("yesButton");
+	yesButton->setText(QStringLiteral("确定"));
+	ui->gridLayout_para->addWidget(yesButton, 4, 0);
+
+
+	QPushButton *cancelButton = new QPushButton();
+	cancelButton->setObjectName("cancelbutton");
+	cancelButton->setText(QStringLiteral("取消"));
+	ui->gridLayout_para->addWidget(cancelButton, 4, 1);
+
+	
+	/*
+	//开启一个子进程.
+	pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
+	std::thread meshtd(&Zero::pclpossisonthread, this, mesh);
+	//将子进程从主进程中分离, 不再受主进程控制
+	meshtd.join();
+	int n = GetModelTypeCount("mesh");
+	m_ss.str("");
+	m_ss << "mesh" << n;
+	m_pclviewer->addPolygonMesh(*mesh, m_ss.str());
+
+
+	*/
+
 }

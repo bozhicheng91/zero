@@ -14,7 +14,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QDockWidget>
-#include <QtWidgets/QFrame>
+#include <QtWidgets/QGridLayout>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QMainWindow>
@@ -74,13 +74,14 @@ public:
     QTreeWidget *treeWidget;
     QDockWidget *dockWidget_para;
     QWidget *dock_para;
-    QFrame *frame;
+    QWidget *gridLayoutWidget;
+    QGridLayout *gridLayout_para;
 
     void setupUi(QMainWindow *ZeroClass)
     {
         if (ZeroClass->objectName().isEmpty())
             ZeroClass->setObjectName(QStringLiteral("ZeroClass"));
-        ZeroClass->resize(585, 635);
+        ZeroClass->resize(660, 652);
         actionOpenCloud = new QAction(ZeroClass);
         actionOpenCloud->setObjectName(QStringLiteral("actionOpenCloud"));
         actionSaveCloud = new QAction(ZeroClass);
@@ -147,7 +148,7 @@ public:
         ZeroClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(ZeroClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 585, 23));
+        menuBar->setGeometry(QRect(0, 0, 660, 23));
         menu = new QMenu(menuBar);
         menu->setObjectName(QStringLiteral("menu"));
         menu_2 = new QMenu(menuBar);
@@ -190,14 +191,18 @@ public:
         ZeroClass->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
         dockWidget_para = new QDockWidget(ZeroClass);
         dockWidget_para->setObjectName(QStringLiteral("dockWidget_para"));
-        dockWidget_para->setMinimumSize(QSize(196, 38));
+        dockWidget_para->setMinimumSize(QSize(118, 140));
         dock_para = new QWidget();
         dock_para->setObjectName(QStringLiteral("dock_para"));
-        frame = new QFrame(dock_para);
-        frame->setObjectName(QStringLiteral("frame"));
-        frame->setGeometry(QRect(10, 10, 171, 241));
-        frame->setFrameShape(QFrame::StyledPanel);
-        frame->setFrameShadow(QFrame::Raised);
+        gridLayoutWidget = new QWidget(dock_para);
+        gridLayoutWidget->setObjectName(QStringLiteral("gridLayoutWidget"));
+        gridLayoutWidget->setGeometry(QRect(10, 10, 251, 151));
+        gridLayout_para = new QGridLayout(gridLayoutWidget);
+        gridLayout_para->setSpacing(6);
+        gridLayout_para->setContentsMargins(11, 11, 11, 11);
+        gridLayout_para->setObjectName(QStringLiteral("gridLayout_para"));
+        gridLayout_para->setSizeConstraint(QLayout::SetNoConstraint);
+        gridLayout_para->setContentsMargins(0, 0, 0, 0);
         dockWidget_para->setWidget(dock_para);
         ZeroClass->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget_para);
 
