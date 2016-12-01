@@ -54,7 +54,7 @@ public:
     QAction *actionSaveMesh;
     QAction *actionCloudMessage;
     QWidget *centralWidget;
-    QHBoxLayout *horizontalLayout_2;
+    QHBoxLayout *horizontalLayout;
     QVBoxLayout *verticalLayout;
     QVTKWidget *pclviewerwidget;
     QProgressBar *progressBar;
@@ -68,20 +68,24 @@ public:
     QMenu *menuAutoICP;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
-    QDockWidget *dockWidget;
+    QDockWidget *filedockWidget;
     QWidget *dockWidgetContents;
-    QHBoxLayout *horizontalLayout;
     QTreeWidget *treeWidget;
-    QDockWidget *dockWidget_para;
-    QWidget *dock_para;
+    QDockWidget *paradockWidget;
+    QWidget *dockWidgetContents_2;
     QWidget *gridLayoutWidget;
-    QGridLayout *gridLayout_para;
+    QGridLayout *gridLayout;
 
     void setupUi(QMainWindow *ZeroClass)
     {
         if (ZeroClass->objectName().isEmpty())
             ZeroClass->setObjectName(QStringLiteral("ZeroClass"));
-        ZeroClass->resize(660, 652);
+        ZeroClass->resize(776, 554);
+        QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(ZeroClass->sizePolicy().hasHeightForWidth());
+        ZeroClass->setSizePolicy(sizePolicy);
         actionOpenCloud = new QAction(ZeroClass);
         actionOpenCloud->setObjectName(QStringLiteral("actionOpenCloud"));
         actionSaveCloud = new QAction(ZeroClass);
@@ -124,10 +128,10 @@ public:
         actionCloudMessage->setObjectName(QStringLiteral("actionCloudMessage"));
         centralWidget = new QWidget(ZeroClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
-        horizontalLayout_2 = new QHBoxLayout(centralWidget);
-        horizontalLayout_2->setSpacing(6);
-        horizontalLayout_2->setContentsMargins(11, 11, 11, 11);
-        horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
+        horizontalLayout = new QHBoxLayout(centralWidget);
+        horizontalLayout->setSpacing(6);
+        horizontalLayout->setContentsMargins(11, 11, 11, 11);
+        horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
         verticalLayout = new QVBoxLayout();
         verticalLayout->setSpacing(6);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
@@ -138,17 +142,18 @@ public:
 
         progressBar = new QProgressBar(centralWidget);
         progressBar->setObjectName(QStringLiteral("progressBar"));
+        progressBar->setMaximum(10000);
         progressBar->setValue(0);
 
         verticalLayout->addWidget(progressBar);
 
 
-        horizontalLayout_2->addLayout(verticalLayout);
+        horizontalLayout->addLayout(verticalLayout);
 
         ZeroClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(ZeroClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 660, 23));
+        menuBar->setGeometry(QRect(0, 0, 776, 23));
         menu = new QMenu(menuBar);
         menu->setObjectName(QStringLiteral("menu"));
         menu_2 = new QMenu(menuBar);
@@ -170,41 +175,35 @@ public:
         statusBar = new QStatusBar(ZeroClass);
         statusBar->setObjectName(QStringLiteral("statusBar"));
         ZeroClass->setStatusBar(statusBar);
-        dockWidget = new QDockWidget(ZeroClass);
-        dockWidget->setObjectName(QStringLiteral("dockWidget"));
+        filedockWidget = new QDockWidget(ZeroClass);
+        filedockWidget->setObjectName(QStringLiteral("filedockWidget"));
+        filedockWidget->setMinimumSize(QSize(220, 220));
         dockWidgetContents = new QWidget();
         dockWidgetContents->setObjectName(QStringLiteral("dockWidgetContents"));
-        horizontalLayout = new QHBoxLayout(dockWidgetContents);
-        horizontalLayout->setSpacing(6);
-        horizontalLayout->setContentsMargins(11, 11, 11, 11);
-        horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
         treeWidget = new QTreeWidget(dockWidgetContents);
-        QTreeWidgetItem *__qtreewidgetitem = new QTreeWidgetItem();
-        __qtreewidgetitem->setText(0, QStringLiteral("1"));
-        treeWidget->setHeaderItem(__qtreewidgetitem);
         treeWidget->setObjectName(QStringLiteral("treeWidget"));
-        treeWidget->setMinimumSize(QSize(100, 100));
-
-        horizontalLayout->addWidget(treeWidget);
-
-        dockWidget->setWidget(dockWidgetContents);
-        ZeroClass->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
-        dockWidget_para = new QDockWidget(ZeroClass);
-        dockWidget_para->setObjectName(QStringLiteral("dockWidget_para"));
-        dockWidget_para->setMinimumSize(QSize(118, 140));
-        dock_para = new QWidget();
-        dock_para->setObjectName(QStringLiteral("dock_para"));
-        gridLayoutWidget = new QWidget(dock_para);
+        treeWidget->setGeometry(QRect(9, 9, 200, 200));
+        sizePolicy.setHeightForWidth(treeWidget->sizePolicy().hasHeightForWidth());
+        treeWidget->setSizePolicy(sizePolicy);
+        treeWidget->setColumnCount(0);
+        filedockWidget->setWidget(dockWidgetContents);
+        ZeroClass->addDockWidget(static_cast<Qt::DockWidgetArea>(1), filedockWidget);
+        paradockWidget = new QDockWidget(ZeroClass);
+        paradockWidget->setObjectName(QStringLiteral("paradockWidget"));
+        paradockWidget->setMinimumSize(QSize(150, 150));
+        dockWidgetContents_2 = new QWidget();
+        dockWidgetContents_2->setObjectName(QStringLiteral("dockWidgetContents_2"));
+        gridLayoutWidget = new QWidget(dockWidgetContents_2);
         gridLayoutWidget->setObjectName(QStringLiteral("gridLayoutWidget"));
-        gridLayoutWidget->setGeometry(QRect(10, 10, 251, 151));
-        gridLayout_para = new QGridLayout(gridLayoutWidget);
-        gridLayout_para->setSpacing(6);
-        gridLayout_para->setContentsMargins(11, 11, 11, 11);
-        gridLayout_para->setObjectName(QStringLiteral("gridLayout_para"));
-        gridLayout_para->setSizeConstraint(QLayout::SetNoConstraint);
-        gridLayout_para->setContentsMargins(0, 0, 0, 0);
-        dockWidget_para->setWidget(dock_para);
-        ZeroClass->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget_para);
+        gridLayoutWidget->setGeometry(QRect(10, 10, 201, 181));
+        gridLayout = new QGridLayout(gridLayoutWidget);
+        gridLayout->setSpacing(6);
+        gridLayout->setContentsMargins(11, 11, 11, 11);
+        gridLayout->setObjectName(QStringLiteral("gridLayout"));
+        gridLayout->setSizeConstraint(QLayout::SetMinimumSize);
+        gridLayout->setContentsMargins(0, 0, 0, 0);
+        paradockWidget->setWidget(dockWidgetContents_2);
+        ZeroClass->addDockWidget(static_cast<Qt::DockWidgetArea>(1), paradockWidget);
 
         menuBar->addAction(menu->menuAction());
         menuBar->addAction(menu_2->menuAction());

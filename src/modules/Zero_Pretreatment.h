@@ -164,11 +164,11 @@ namespace zero
 		// 计算点云的法向量，PCA方法,任何类型点云(已验证)
 		template<typename PointT>
 		void computecloudnormal(const pcl::PointCloud<PointT> &cloud,
-			pcl::PointCloud<pcl::PointNormal>& cloud_normal,
+			pcl::PointCloud<pcl::Normal>& cloud_normal,
 			int k,
 			double r)
 		{
-			pcl::NormalEstimation<PointT, pcl::PointNormal> ne;
+			pcl::NormalEstimation<PointT, pcl::Normal> ne;
 			ne.setInputCloud(cloud.makeShared());
 			pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>());
 			ne.setSearchMethod(tree);
@@ -177,6 +177,9 @@ namespace zero
 
 			if (r < 1e-10)
 				ne.setKSearch(k);
+			Eigen::Vector4f centriod;
+			pcl::compute3DCentroid(cloud, centriod);
+			ne.setViewPoint(centriod[0], centriod[1], centriod[2]);
 
 			ne.compute(cloud_normal);
 		}
@@ -311,9 +314,9 @@ namespace zero
 		// 计算点云的法向量
 		template<typename PointT>
 		void ComputeCloudNormal(const pcl::PointCloud<PointT> &cloud,
-			pcl::PointCloud<pcl::PointNormal>& cloud_normal,
+			pcl::PointCloud<pcl::Normal>& cloud_normal,
 			int k = 1,
-			double r = 0)
+			double r = 0.0)
 		{
 			zero::ZEROPretreatment p;
 			p.computecloudnormal(cloud, cloud_normal, k, r);

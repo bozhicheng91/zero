@@ -19,6 +19,9 @@ static int measure_success = -1; // -1 表示失败，0 表示运行中， 1 表示成功
 static int polepoint_success = -1; // -1 表示失败，0 表示运行中， 1 表示成功
 static int center_success = -1; // -1 表示失败，0 表示运行中， 1 表示成功
 static int centroid_success = -1; // -1 表示失败，0 表示运行中， 1 表示成功
+static bool global_flag = false;
+static bool yesflag = false;
+static bool noflag = false;
 
 Zero::Zero(QWidget *parent)
 	: QMainWindow(parent),
@@ -26,7 +29,7 @@ Zero::Zero(QWidget *parent)
 {
 	ui->setupUi(this);
 	this->setWindowTitle(QString::fromLocal8Bit("三维ZERO"));
-	ui->dockWidget_para->hide();
+
 	// 初始化
 	Init();
 
@@ -51,17 +54,19 @@ void Zero::Init()
 
 	// 文件目录初始化
 	ui->treeWidget->setColumnCount(1);
-	ui->treeWidget->setHeaderLabel(QStringLiteral("场景"));
+	ui->treeWidget->setHeaderLabel(QStringLiteral("模型"));
 
 	// 显示器初始化
 	m_pclviewer.reset(new PCLViewer("pclviewer", false));
-	m_pclviewer->setBackgroundColor(0.5, 0.5, 1.0);
+	m_pclviewer->setBackgroundColor(0.3, 0.3, 1);
 	m_pclviewer->addText("", 5, 20, "Text");
 	// Widget初始化
+	ui->filedockWidget->setWindowTitle(QStringLiteral("结构树"));
+	ui->filedockWidget->hide();
+	ui->paradockWidget->hide();
 	ui->pclviewerwidget->SetRenderWindow(m_pclviewer->getRenderWindow());
 	m_pclviewer->setupInteractor(ui->pclviewerwidget->GetInteractor(), ui->pclviewerwidget->GetRenderWindow());
 	ui->pclviewerwidget->update();
-	//刷新界面
 	qApp->processEvents();
 }
 
@@ -69,11 +74,11 @@ void Zero::Signals_Slots()
 {
 	// 打开点云文件
 	connect(ui->actionOpenCloud, SIGNAL(triggered()), this, SLOT(OpenCloudFileTriggered()));
-	// 打开点云文件
+	// 打开 mesh 文件
 	connect(ui->actionOpenMesh, SIGNAL(triggered()), this, SLOT(OpenMeshFileTriggered()));
-	// 保存文件
+	// 保存点云文件
 	connect(ui->actionSaveCloud, SIGNAL(triggered()), this, SLOT(SaveCloudTriggered()));
-	// 保存文件
+	// 保存 mesh 文件
 	connect(ui->actionSaveMesh, SIGNAL(triggered()), this, SLOT(SaveMeshTriggered()));
 	// 退出
 	connect(ui->actionQuit, SIGNAL(triggered()), this, SLOT(close()));
@@ -123,15 +128,12 @@ void Zero::opencloudfilethread()
 {
 	m_opreator_index = 1;
 	opencloudfile_success = 0;
-	//区分打开模型和添加模型的区别. 打开模型时, 应将视图中原先存在的模型移除.
-	//m_pclviewer->removeAllShapes();
-
-	std::vector<PCTRGB::Ptr>().swap(m_clouds);
-
+	//ui->progressBar->setRange(0,10000);
+	m_progressBarValue = 100;
 	// 点云读取
-		for (size_t i = 0; i < m_openfile_list.size(); i++)
+	m_progressBarState = 1;
+	for (size_t i = 0; i < m_openfile_list.size(); i++)
 	{
-		//临时点云模型. 初始默认采用PCTRGB格式存储点云数据
 		PCTRGB::Ptr cloud_tmp(new PCTRGB);
 		int return_status;
 		std::string file = m_zhcode->fromUnicode(m_openfile_list[i]).data();
@@ -141,16 +143,14 @@ void Zero::opencloudfilethread()
 		// toStdString返回std::string类型
 		if (m_openfile_list[i].endsWith(".ply", Qt::CaseInsensitive))
 			return_status = pcl::io::loadPLYFile(file, *cloud_tmp);
-		if (m_openfile_list[i].endsWith(".asc", Qt::CaseInsensitive))
-			return_status = zero::zeroio::LoadASC(file, *cloud_tmp);
+		//if (m_openfile_list[i].endsWith(".asc", Qt::CaseInsensitive))
+		//	return_status = zero::zeroio::LoadASC(file, *cloud_tmp);
 		if (m_openfile_list[i].endsWith(".gpd", Qt::CaseInsensitive))
 			return_status = zero::zeroio::LoadGPD(file, *cloud_tmp);
 
 		m_clouds.push_back(cloud_tmp);
-		qDebug() <<"cloud input successfully !!";
 		if (return_status != 0)
 		{
-			ui->statusBar->clearMessage();
 			m_ss << "无法打开点云文件" << m_openfile_list[i].toStdString() << std::endl;
 			m_log_message = m_zhcode->fromUnicode(QString::fromLocal8Bit(m_ss.str().c_str())).data();
 			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
@@ -160,19 +160,17 @@ void Zero::opencloudfilethread()
 		string modeltype = "cloud";
 		m_models[i] = modeltype;
 
-		// 显示点云
-		//m_ss.str("");
-		//m_ss << "cloud" << i;
-		//m_pclviewer->addPointCloud(cloud_tmp, m_ss.str());
-		//m_pclviewer->resetCamera();
+	
 	}
+	m_progressBarState = 2;
 
 	opencloudfile_success = 1;
+	
+	
 }
 
 void Zero::openmeshfilethread()
 {
-	m_pclviewer->removeAllShapes();
 	m_opreator_index = 2;
 	openmeshfile_success = 0;
 	// mesh 读取
@@ -204,31 +202,49 @@ void Zero::openmeshfilethread()
 		}
 		string modeltype = "mesh";
 		m_models[i] = modeltype;
-
-		// 显示mesh
-		m_ss.str("");
-		m_ss << "mesh" << i;
-		m_pclviewer->addPolygonMesh(*mesh_tmp, m_ss.str());
-		m_pclviewer->resetCamera();
 	}
 
 	openmeshfile_success = 1;
 }
 
-void Zero::savecloudthread()
+void Zero::savecloudthread(std::string filename)
 {
 	m_opreator_index = 3;
 	savecloud_success = 0;
 
+	int return_status = 1;
+	if (endsWith(filename, ".pcd"))
+	{
+		return_status = pcl::io::savePCDFile(filename, *m_clouds[m_choose_cloud_index], true);
+	}
+	if (endsWith(filename, ".ply"))
+	{
+		return_status = pcl::io::savePLYFile(filename, *m_clouds[m_choose_cloud_index], true);
+	}
+
+	if (return_status != 0)
+	{
+		savecloud_success = -1;
+	}
 
 	savecloud_success = 1;
 }
 
-void Zero::savemeshthread()
+void Zero::savemeshthread(std::string filename)
 {
 	m_opreator_index = 4;
 	savemesh_success = 0;
 
+	int return_status = 1;
+	if (endsWith(filename, ".stl") || endsWith(filename, ".ply"))
+	{
+		return_status = pcl::io::savePolygonFile(filename, *m_meshs[m_choose_mesh_index], true);
+	}
+
+	if (return_status != 0)
+	{
+		savemesh_success = -1;
+	}
 
 	savemesh_success = 1;
 }
@@ -306,26 +322,22 @@ void Zero::ndticpthread()
 	ndticp_success = 1;
 }
 
-void Zero::pclpossisonthread(pcl::PolygonMesh::Ptr mesh)
+void Zero::pclpossisonthread(int k, double r, bool flag, double scale)
 {
-	qDebug() << "poisson reconstruction is begining !";
-	m_opreator_index = 13;
 	pclpossison_success = 0;
 
 	PCT::Ptr cloud(new PCT);
 	PCTRGB2PCT(*m_clouds[m_choose_cloud_index], *cloud);
-	//pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
-	if (zero::zerosurface::PCLPossionReconstruct(cloud, *mesh) != 0)
+	pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
+	if (zero::zerosurface::PCLPossionReconstruct(cloud, *mesh, k, r, flag, scale) != 0)
 	{
 		pclpossison_success = -1;
 		return;
 	}
 
 	m_meshs.push_back(mesh);
-	
 
 	pclpossison_success = 1;
-	qDebug() << "poisson reconstruction is done !";
 }
 
 void Zero::pclfastthread()
@@ -387,6 +399,10 @@ void Zero::DeleteModel()
 	string modeltype = m_models[m_choose_model_index];
 	if (modeltype.compare("cloud") == 0)
 	{
+		m_ss.str("");
+		m_ss << "cloud" << m_choose_cloud_index;
+		m_pclviewer->removePointCloud(m_ss.str());
+		ui->pclviewerwidget->update();
 		std::vector<PCTRGB::Ptr>::iterator Iter;
 		i = 0;
 		for (Iter = m_clouds.begin(); Iter != m_clouds.end(); Iter++)
@@ -402,6 +418,10 @@ void Zero::DeleteModel()
 	}
 	if (modeltype.compare("mesh") == 0)
 	{
+		m_ss.str("");
+		m_ss << "mesh" << m_choose_mesh_index;
+		m_pclviewer->removePolygonMesh(m_ss.str());
+		ui->pclviewerwidget->update();
 		std::vector<pcl::PolygonMesh::Ptr>::iterator Iter;
 		i = 0;
 		for (Iter = m_meshs.begin(); Iter != m_meshs.end(); Iter++)
@@ -428,6 +448,8 @@ void Zero::DeleteModel()
 	}
 }
 
+
+/*槽函数*/
 void Zero::OpenCloudFileTriggered()
 {
 	m_openfile_list.clear();
@@ -451,7 +473,14 @@ void Zero::OpenCloudFileTriggered()
 
 	m_models.clear();
 	std::map<int, string>().swap(m_models);
-	m_pclviewer->removeAllPointClouds();
+	for (size_t i = 0; i < m_clouds.size(); i++)
+	{
+		m_clouds[i]->clear();
+	}
+	std::vector<PCTRGB::Ptr>().swap(m_clouds);
+	std::vector<pcl::PolygonMesh::Ptr>().swap(m_meshs);
+	//m_pclviewer->removeAllPointClouds();
+	m_pclviewer->removeAllShapes();
 	ui->pclviewerwidget->update();
 
 	QStringList paths = m_openfile_list[0].split(QRegExp("[\\/]"));
@@ -465,29 +494,18 @@ void Zero::OpenCloudFileTriggered()
 		delete ui->treeWidget->topLevelItem(0);
 	}
 
-	ui->progressBar->setRange(0, m_openfile_list.size());
+	//ui->progressBar->setRange(0, m_openfile_list.size());
+	//设定progressBar的值
+	
 	ui->statusBar->clearMessage();
 	ui->statusBar->showMessage(QString::fromLocal8Bit("正在读取数据..."));
 	m_log_message = m_zhcode->fromUnicode(QString("正在读取数据...")).data();
 	WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
-
-	//区分打开模型和添加模型的区别. 打开模型时, 应将视图中原先存在的模型移除.
-	m_pclviewer->removeAllShapes();
-	//开辟一个新线程
-	std::thread opencloudthread(&Zero::opencloudfilethread, this);
-	//opencloudthread.detach();
-	opencloudthread.join();
-
-	qDebug() << "m_clouds size is  " << m_clouds.size();
-	//将读入的文件添加到view中
-	for (int i = 0; i < m_clouds.size(); i++){
-		m_ss.str("");
-		m_ss << "cloud" << i;
-		m_pclviewer->addPointCloud(m_clouds[i], m_ss.str());
-		m_pclviewer->resetCamera();
-	}
-	// 增加文件目录
 	
+	std::thread opencloudthread(&Zero::opencloudfilethread, this);
+	opencloudthread.detach();
+
+	// 增加文件目录
 	for (int i = 0; i < m_openfile_list.size(); i++)
 	{
 		QStringList strlist = m_openfile_list[i].split(QRegExp("[\\/.]"));
@@ -495,6 +513,10 @@ void Zero::OpenCloudFileTriggered()
 		QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget, QStringList(name));
 		item->setCheckState(0, Qt::Checked);
 	}
+	
+	
+	
+	ui->filedockWidget->show();
 	ui->treeWidget->expandAll();
 }
 
@@ -520,22 +542,28 @@ void Zero::OpenMeshFileTriggered()
 	}
 
 	int mesh_count = GetModelTypeCount("mesh");
-	for (int i = 0; i < mesh_count; i++)
+	m_pclviewer->removeAllShapes();
+	ui->pclviewerwidget->update();
+	/*for (int i = 0; i < mesh_count; i++)
 	{
 		m_ss.str("");
 		m_ss << "mesh" << i;
 		m_pclviewer->removePolygonMesh(m_ss.str());
-	}
+	}*/
 	m_models.clear();
 	std::map<int, string>().swap(m_models);
+	for (size_t i = 0; i < m_clouds.size(); i++)
+	{
+		m_clouds[i]->clear();
+	}
+	std::vector<PCTRGB::Ptr>().swap(m_clouds);
+	std::vector<pcl::PolygonMesh::Ptr>().swap(m_meshs);
 
 	QStringList paths = m_openfile_list[0].split(QRegExp("[\\/]"));
 	for (size_t i = 0; i < paths.size() - 1; i++)
 	{
 		m_currentPath += paths[i];
 	}
-
-
 
 	while (ui->treeWidget->topLevelItemCount() > 0)
 	{
@@ -564,12 +592,46 @@ void Zero::OpenMeshFileTriggered()
 
 void Zero::SaveCloudTriggered()
 {
+	QString file = QFileDialog::getSaveFileName(this,
+		QStringLiteral("保存点云文件"),
+		m_currentPath,
+		tr("data(*.pcd *.ply)"));
 
+	if (file.isEmpty())
+	{
+		QMessageBox::warning(NULL, QStringLiteral("警告"), QStringLiteral("文件名为空！"));
+		m_log_message = m_zhcode->fromUnicode(QString("文件名为空！")).data();
+		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+		return;
+	}
+
+	m_currentPath = file;
+
+	std::string filename = m_zhcode->fromUnicode(file).data();
+	std::thread savecloudthd(&Zero::savecloudthread, this, filename);
+	savecloudthd.detach();
 }
 
 void Zero::SaveMeshTriggered()
 {
+	QString file = QFileDialog::getSaveFileName(this,
+		QStringLiteral("保存三角网格文件"),
+		m_currentPath,
+		tr("data(*.stl *.ply)"));
 
+	if (file.isEmpty())
+	{
+		QMessageBox::warning(NULL, QStringLiteral("警告"), QStringLiteral("文件名为空！"));
+		m_log_message = m_zhcode->fromUnicode(QString("文件名为空！")).data();
+		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+		return;
+	}
+
+	m_currentPath = file;
+
+	std::string filename = m_zhcode->fromUnicode(file).data();
+	std::thread savemeshthd(&Zero::savemeshthread, this, filename);
+	savemeshthd.detach();
 }
 
 void Zero::VoxelGridSimplifyTriggered()
@@ -614,7 +676,6 @@ void Zero::NDTICPTriggered()
 
 void Zero::PCLPossisonTriggered()
 {
-	
 	if (m_clouds[m_choose_cloud_index]->size() < 3)
 	{
 		ui->statusBar->clearMessage();
@@ -623,9 +684,10 @@ void Zero::PCLPossisonTriggered()
 		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 		return;
 	}
-	pclpoissonParaSet();
 
-	
+	PCLPossisonPanel();
+
+	m_opreator_index = 13;
 }
 
 void Zero::PCLFastTriggered()
@@ -682,7 +744,7 @@ void Zero::IndexChoseClicked(QTreeWidgetItem *item, int count)
 		for (int i = 0; i <= m_choose_model_index; i++)
 		{
 			std::string mtype = m_models[i];
-			if (mtype.compare("cloud") == 0)
+			if (mtype.compare("mesh") == 0)
 			{
 				n++;
 			}
@@ -727,12 +789,45 @@ void Zero::RefreshStarbar()
 	// 打开点云文件
 	if (m_opreator_index == 1)
 	{
+
+
+		
+		if (m_progressBarState == 1 && m_progressBarValue < 7000)
+		{
+
+			int pau = 1000;
+			//while (pau-- > 0);
+			m_progressBarValue = m_progressBarValue + 10;
+			ui->progressBar->setValue(m_progressBarValue);
+			
+		}	
+
+		if (m_progressBarState == 2)
+		{
+		
+			for (; m_progressBarValue < 9999; m_progressBarValue++)
+			{
+				int pau_2 = 1000;
+				//while (pau_2-- > 0);
+				ui->progressBar->setValue(m_progressBarValue);
+			}
+		}
+
+
 		if (opencloudfile_success == 0)
 		{			
-			ui->pclviewerwidget->update();
+			//ui->pclviewerwidget->update();
 		}		
 		if (opencloudfile_success == 1)
 		{
+			
+			for (int i = 0; i < m_clouds.size(); i++)
+			{
+				// 显示点云
+				m_ss.str("");
+				m_ss << "cloud" << i;
+				m_pclviewer->addPointCloud(m_clouds[i], m_ss.str());
+			}
 			m_pclviewer->resetCamera();
 			ui->pclviewerwidget->update();
 			ui->statusBar->clearMessage();
@@ -741,6 +836,10 @@ void Zero::RefreshStarbar()
 			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 			m_opreator_index = 0;
 			opencloudfile_success = 0;
+			
+			
+			m_progressBarValue = 0;
+			ui->progressBar->setValue(m_progressBarValue);
 		}
 		if (opencloudfile_success == -1)
 		{
@@ -760,10 +859,17 @@ void Zero::RefreshStarbar()
 	{
 		if (openmeshfile_success == 0)
 		{
-			ui->pclviewerwidget->update();
+			//ui->pclviewerwidget->update();
 		}
 		if (openmeshfile_success == 1)
 		{
+			for (int i = 0; i < m_meshs.size(); i++)
+			{
+				// 显示mesh
+				m_ss.str("");
+				m_ss << "mesh" << i;
+				m_pclviewer->addPolygonMesh(*m_meshs[i], m_ss.str());
+			}
 			m_pclviewer->resetCamera();
 			ui->pclviewerwidget->update();
 			ui->statusBar->clearMessage();
@@ -786,17 +892,105 @@ void Zero::RefreshStarbar()
 		}
 	}
 
+	// 保存点云文件
+	if (m_opreator_index == 3)
+	{
+		if (savecloud_success == 0)
+		{
+			;
+		}
+		if (savecloud_success == 1)
+		{
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QString::fromLocal8Bit("保存点云数据结束!"));
+			m_log_message = m_zhcode->fromUnicode(QString("保存点云数据结束!")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+			m_opreator_index = 0;
+			savecloud_success = 0;
+		}
+		if (savecloud_success == -1)
+		{
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QString::fromLocal8Bit("保存点云数据失败!"));
+			m_log_message = m_zhcode->fromUnicode(QString("保存点云数据结束!")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+			m_opreator_index = 0;
+			savecloud_success = 0;
+		}
+	}
 
-
+	// 保存三角网格文件
+	if (m_opreator_index == 4)
+	{
+		if (savemesh_success == 0)
+		{
+			;
+		}
+		if (savemesh_success == 1)
+		{
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QString::fromLocal8Bit("保存三角网格数据结束!"));
+			m_log_message = m_zhcode->fromUnicode(QString("保存三角网格数据结束!")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+			m_opreator_index = 0;
+			savemesh_success = 0;
+		}
+		if (savemesh_success == -1)
+		{
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QString::fromLocal8Bit("保存三角网格数据失败!"));
+			m_log_message = m_zhcode->fromUnicode(QString("保存三角网格数据结束!")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+			m_opreator_index = 0;
+			savemesh_success = 0;
+		}
+	}
 
 
 	// PCL泊松重建
 	// 打开三角网格文件
 	if (m_opreator_index == 13)
 	{
+		if (!global_flag && !yesflag && !noflag)
+		{
+			return;
+		}
+
+		if (noflag)
+		{
+			ui->paradockWidget->hide();
+			noflag = false;
+			yesflag = false;
+			m_opreator_index = 0;
+			global_flag = false;
+			return;
+		}
+		if (yesflag)
+		{
+			int k = m_spinbox1->text().toInt();
+			double r = 0.0;
+			if (k == 0)
+			{
+				r = m_doublespinbox1->text().toDouble();
+			}
+			bool flag = true;
+			double scale = m_doublespinbox2->text().toDouble();
+			if (m_checkbox1->isChecked())
+			{
+				flag = false;
+			}
+			ui->paradockWidget->hide();
+			noflag = false;
+			yesflag = false;
+			global_flag = true;
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QString::fromLocal8Bit("正在重建 ..."));
+			std::thread meshtd(&Zero::pclpossisonthread, this, k, r, flag, scale);
+			meshtd.detach();
+		}
 		if (pclpossison_success == 0)
 		{
-			ui->pclviewerwidget->update();
+			//ui->pclviewerwidget->update();
 		}
 		if (pclpossison_success == 1)
 		{
@@ -804,7 +998,12 @@ void Zero::RefreshStarbar()
 			QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget, QStringList(choose_item->text(0)));
 			item->setCheckState(0, Qt::Checked);
 			m_models[m_models.size()] = "mesh";
-			m_pclviewer->resetCamera();
+			
+			int n = GetModelTypeCount("mesh");
+			m_ss.str("");
+			m_ss << "mesh" << n - 1;
+			m_pclviewer->addPolygonMesh(*m_meshs[m_meshs.size() - 1], m_ss.str());
+
 			ui->pclviewerwidget->update();
 			ui->statusBar->clearMessage();
 			ui->statusBar->showMessage(QString::fromLocal8Bit("泊松重建结束!"));
@@ -812,6 +1011,7 @@ void Zero::RefreshStarbar()
 			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 			m_opreator_index = 0;
 			pclpossison_success = 0;
+			global_flag = false;
 		}
 		if (pclpossison_success == -1)
 		{
@@ -823,15 +1023,29 @@ void Zero::RefreshStarbar()
 			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 			m_opreator_index = 0;
 			pclpossison_success = 0;
+			global_flag = false;
 		}
 	}
+}
+
+void Zero::YesTriggered()
+{
+	ui->paradockWidget->hide();
+	yesflag = true;
+}
+
+void Zero::NoTriggered()
+{
+	ui->paradockWidget->hide();
+	m_opreator_index = 0;
+	noflag = true;
 }
 
 void Zero::keyPressEvent(QKeyEvent *keyevent)
 {
 	if (keyevent->key() == Qt::Key_Delete)
 	{
-		DeleteModel();
+	 	DeleteModel();
 	}
 
 	QMainWindow::keyPressEvent(keyevent);
@@ -840,6 +1054,163 @@ void Zero::keyPressEvent(QKeyEvent *keyevent)
 void Zero::keyReleaseEvent(QKeyEvent *keyevent)
 {
 	QMainWindow::keyReleaseEvent(keyevent);
+}
+
+void Zero::VoxelGridSimplifyPanel()
+{
+
+}
+
+void Zero::UniformSimplifyPanel()
+{
+
+}
+
+void Zero::OutlierRemovePanel()
+{
+
+}
+
+void Zero::UpSamplifyPanel()
+{
+
+}
+
+void Zero::ComputerNormalPanel()
+{
+
+}
+
+void Zero::SmoothNormalPanel()
+{
+
+}
+
+void Zero::OriginICPPanel()
+{
+
+}
+
+void Zero::NDTICPPanel()
+{
+
+}
+
+void Zero::PCLPossisonPanel()
+{
+	ClearLayout(ui->gridLayout);
+
+	ui->paradockWidget->setWindowTitle(QStringLiteral("poisson 参数设置"));
+
+	QLabel *labelk = AddLabel("labelk", "k neighhors", 0, 0);
+	m_spinbox1 = AddSpinBox("spinboxk", 0, 100,20, 0, 1);
+
+	QLabel *labelr = AddLabel("labelk", "search radius", 1, 0);
+	m_doublespinbox1 = AddDoubleSpinBox("doublespinboxr", 0.0, 1000.0, 5, 1, 1);
+	
+
+	QLabel *labelserrior = AddLabel("labelserrior", "closure", 2, 0);
+	m_checkbox1 = new QCheckBox();
+	m_checkbox1->setObjectName("serriorcheckbox");
+	m_checkbox1->setText("");
+	ui->gridLayout->addWidget(m_checkbox1, 2, 1);
+
+	QLabel *labelscale = AddLabel("labelscale", "clipping factor", 3, 0);
+	m_doublespinbox2 = AddDoubleSpinBox("doublespinboxscale", 0.0, 20.0,3, 3, 1);
+	//ui->gridLayout->addWidget(labelr, 3, 0);
+	//ui->gridLayout->addWidget(m_doublespinbox2, 3, 1);
+
+
+	QLabel *labelNodeNum = AddLabel("labelNodeNum", "SamplesPerNode", 4, 0);
+	m_doublespinbox3 = AddDoubleSpinBox("doublespinboxscale", 0.0, 20.0, 3, 4, 1);
+
+	QLabel *setConfidence = AddLabel("setConfidence", "setConfidence", 5, 0);
+	QComboBox *choice_type = new QComboBox();
+	choice_type->addItem("True");
+	choice_type->addItem("False");
+	ui->gridLayout->addWidget(choice_type, 5, 1);
+
+	AddYesNoButton(6);
+
+	ui->paradockWidget->show();
+}
+
+void Zero::PCLFastPanel()
+{
+
+}
+
+
+
+void Zero::NoButtonClicked()
+{
+
+}
+
+void Zero::ClearLayout(QLayout *layout)
+{
+	QLayoutItem *item;
+	while ((item = layout->takeAt(0)) != 0)
+	{
+		if (item->widget())
+		{
+			delete item->widget();
+		}
+
+		QLayout *childLayout = item->layout();
+		if (childLayout)
+		{
+			ClearLayout(childLayout);
+		}
+		delete item;
+	}
+}
+
+QLabel *Zero::AddLabel(QString labelname, QString text, int i, int j)
+{
+	QLabel *label = new QLabel();
+	label->setObjectName(labelname);
+	label->setText(QString::fromLocal8Bit(text.toLocal8Bit()));
+	ui->gridLayout->addWidget(label, i, j,1, 1);
+	return label;
+}
+
+QDoubleSpinBox *Zero::AddDoubleSpinBox(QString objectname, double min, double max, double defaultValue, int i, int j)
+{
+	QDoubleSpinBox *doublespinbox = new QDoubleSpinBox();
+	doublespinbox->setObjectName(objectname);
+	doublespinbox->setMinimum(min);
+	doublespinbox->setMaximum(max);
+	doublespinbox->setValue(defaultValue);
+	ui->gridLayout->addWidget(doublespinbox, i, j); 
+	return doublespinbox;
+}
+
+QSpinBox *Zero::AddSpinBox(QString objectname, int min, int max,int defaultValue, int i, int j)
+{
+	QSpinBox *spinbox = new QSpinBox();
+	spinbox->setObjectName(objectname);
+	spinbox->setMinimum(min);
+	spinbox->setMaximum(max);
+	spinbox->setValue(defaultValue);
+	ui->gridLayout->addWidget(spinbox, i, j);
+	return spinbox;
+}
+
+void Zero::AddYesNoButton(int i)
+{
+	m_yesbutton = new QPushButton();
+	m_yesbutton->setObjectName("yesbutton");
+	m_yesbutton->setText(QStringLiteral("确定"));
+	ui->gridLayout->addWidget(m_yesbutton, i, 0);
+
+	m_nobutton = new QPushButton();
+	m_nobutton->setObjectName("nobutton");
+	m_nobutton->setText(QStringLiteral("取消"));
+	ui->gridLayout->addWidget(m_nobutton, i, 1);
+
+	connect(m_yesbutton, SIGNAL(clicked()), this, SLOT(YesTriggered()));
+	connect(m_nobutton, SIGNAL(clicked()), this, SLOT(NoTriggered()));
 }
 
 int Zero::GetModelTypeCount(std::string modeltype)
@@ -866,76 +1237,7 @@ void Zero::PCTRGB2PCT(PCTRGB& cloud_rgb, PCT& cloud)
 	}
 }
 
-
-void Zero::pclpoissonParaSet(){
-	
-	//添加dock参数面板
-	ui->dockWidget_para->show();
-	ui->dockWidget_para->setWindowTitle(QStringLiteral("poisson 参数设定"));
-	//cleargridlayout(ui.gridLayout);
-
-	QLabel *label_1 = new QLabel();
-	label_1->setObjectName("label1");
-	label_1->setText(QStringLiteral("setDepth"));
-	ui->gridLayout_para->addWidget(label_1, 0, 0, 1, 1);
-	
-
-
-	QDoubleSpinBox *doublespinbox1 = new QDoubleSpinBox();
-	doublespinbox1->setObjectName("doublespinbox1");
-	doublespinbox1->setMinimum(-100.0);
-	doublespinbox1->setMaximum(100);
-	ui->gridLayout_para->addWidget(doublespinbox1, 0, 1, 1, 1);
-
-	
-	//ui->gridLayout_para->setSpacing(10);    //水平间隔
-
-	QLabel *label_2 = new QLabel();
-	label_2->setObjectName("label2");
-	label_2->setText(QStringLiteral("setSamplesPerNode"));
-	ui->gridLayout_para->addWidget(label_2, 1, 0,1 ,1);
-
-	QDoubleSpinBox *doublespinbox2 = new QDoubleSpinBox();
-	doublespinbox2->setObjectName("doublespinbox2");
-	doublespinbox2->setMinimum(-100.0);
-	doublespinbox2->setMaximum(100);
-	ui->gridLayout_para->addWidget(doublespinbox2, 1, 1, 1,1);
-
-
-	QLabel *label_3 = new QLabel();
-	label_3->setObjectName("label3");
-	label_3->setText(QStringLiteral("setConfidence"));
-	ui->gridLayout_para->addWidget(label_3, 2, 0, 1, 1);
-
-	QComboBox *choice_type = new QComboBox();
-	choice_type->addItem("True");
-	choice_type->addItem("False");
-	ui->gridLayout_para->addWidget(choice_type, 2, 1, 1, 1);
-
-	QPushButton *yesButton = new QPushButton();
-	yesButton->setObjectName("yesButton");
-	yesButton->setText(QStringLiteral("确定"));
-	ui->gridLayout_para->addWidget(yesButton, 4, 0);
-
-
-	QPushButton *cancelButton = new QPushButton();
-	cancelButton->setObjectName("cancelbutton");
-	cancelButton->setText(QStringLiteral("取消"));
-	ui->gridLayout_para->addWidget(cancelButton, 4, 1);
-
-	
-	/*
-	//开启一个子进程.
-	pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
-	std::thread meshtd(&Zero::pclpossisonthread, this, mesh);
-	//将子进程从主进程中分离, 不再受主进程控制
-	meshtd.join();
-	int n = GetModelTypeCount("mesh");
-	m_ss.str("");
-	m_ss << "mesh" << n;
-	m_pclviewer->addPolygonMesh(*mesh, m_ss.str());
-
-
-	*/
-
+bool Zero::endsWith(const std::string& str, const std::string& substr)
+{
+	return str.rfind(substr) == (str.length() - substr.length());
 }

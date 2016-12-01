@@ -56,6 +56,7 @@
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
       <AdditionalOptions>-Zm459 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

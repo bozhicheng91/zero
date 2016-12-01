@@ -34,7 +34,10 @@ int zero::ZEROSurface::zerospeedtriangulation(pcl::PointCloud<pcl::PointNormal>&
 	return (0);
 }
 
-int zero::ZEROSurface::PoissonMesh(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PolygonMesh &mesh)
+int zero::ZEROSurface::PoissonMesh(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, 
+	pcl::PolygonMesh &mesh, 
+	int k, 
+	double r)
 {
 	if (cloud->size() == 0)
 	{
@@ -42,65 +45,42 @@ int zero::ZEROSurface::PoissonMesh(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pc
 	}
 
 	pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
-
-
-	
-	/*法向计算阶段*/
-	pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
+	// 法线估计对象
 	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-	ne.setNumberOfThreads(8);
-	ne.setInputCloud(cloud);
-	ne.setRadiusSearch(5);
-	Eigen::Vector4f centroid;
-	pcl::compute3DCentroid(*cloud, centroid);
-	ne.setViewPoint(centroid[0], centroid[1], centroid[2]);
+	zero::zeropretreatment::ComputeCloudNormal(*cloud, *normals, k, r);
 
-	
-	ne.compute(*normals);
-
-	
-	for (size_t i = 0; i < normals->size(); ++i){
-		normals->points[i].normal_x *= -1;
-		normals->points[i].normal_y *= -1;
-		normals->points[i].normal_z *= -1;
-	}
-	
-	//存储估计的法线
-	/*
-	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-	tree->setInputCloud(cloud);
-	n->setInputCloud(cloud);
-	n->setSearchMethod(tree);
-	n->setKSearch(50);
-	n->compute(*normals);
-	*/
 	pcl::concatenateFields(*cloud, *normals, *cloud_with_normals);
 
-	qDebug() << "  >>> normal estimation is done !";
+	for (size_t i = 0; i < cloud_with_normals->size(); i++)
+	{
+		cloud_with_normals->points[i].normal_x *= -1;
+		cloud_with_normals->points[i].normal_y *= -1;
+		cloud_with_normals->points[i].normal_z *= -1;
+	}
 
-	//pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
-	//tree2->setInputCloud(cloud_with_normals);
 	pcl::Poisson<pcl::PointNormal>::Ptr poissonInstance(new pcl::Poisson<pcl::PointNormal>);
-	//poissonInstance->setSearchMethod(tree2);
+	pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
+	tree2->setInputCloud(cloud_with_normals);
+	poissonInstance->setSearchMethod(tree2);
 	poissonInstance->setInputCloud(cloud_with_normals);
-	//poissonInstance->setConfidence(false);
-	//poissonInstance->setManifold(false);
+	poissonInstance->setConfidence(false);
+	poissonInstance->setManifold(false);
 	poissonInstance->setOutputPolygons(false);
-	//poissonInstance->setIsoDivide(8);
-	//poissonInstance->setSamplesPerNode(4);
-	poissonInstance->performReconstruction(mesh);
-	qDebug() << "  >>> reconstruction step is done !";
+	poissonInstance->setIsoDivide(8);
+	poissonInstance->setSamplesPerNode(4);
+	//poissonInstance->performReconstruction(mesh);
+	poissonInstance->reconstruct(mesh);
 
 	return 0;
 }
 
-int zero::ZEROSurface::mesh_serrior(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_orig, pcl::PolygonMesh& mesh)
+int zero::ZEROSurface::mesh_serrior(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_orig, pcl::PolygonMesh& mesh, double scale)
 {
 	if (cloud_orig->size() == 0)
 	{
 		return (1);
 	}
-	qDebug() << "  >>> serrior step is beginning !";
+
 	//获取 mesh 的 pointcloud
 	pcl::PointCloud<pcl::PointXYZ>::Ptr meshcloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::fromPCLPointCloud2(mesh.cloud, *meshcloud);
@@ -116,7 +96,7 @@ int zero::ZEROSurface::mesh_serrior(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_or
 	map<int, int> mapPointIn;
 
 	//这里阈值越大, 删除的点越少
-	double minDistance = zero::zerocommon::pointcloudmeand(*cloud_orig) * 4.0;
+	double minDistance = zero::zerocommon::pointcloudmeand(*cloud_orig) * scale;
 	for (int i = 0; i < meshcloud->size(); i++)
 	{
 		PT searchPoint = meshcloud->points[i];
@@ -156,7 +136,7 @@ int zero::ZEROSurface::mesh_serrior(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_or
 			}
 		}
 	}
-	qDebug() << "  >>> serrior step is beginning !";
+
 	return (0);
 }
 
@@ -187,20 +167,25 @@ int zero::zerosurface::SpeedTriangulation(pcl::PointCloud<pcl::PointNormal>& clo
 	return surface.zerospeedtriangulation(cloud_with_normal, mesh, mu, k, max_surface_angle, keep_normal);
 }
 
-int zero::zerosurface::PCLPossionReconstruct(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PolygonMesh& mesh)
+int zero::zerosurface::PCLPossionReconstruct(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, 
+	pcl::PolygonMesh& mesh, 
+	int k /*= 30*/, 
+	double r /*= 0*/, 
+	bool flag /*= false*/, 
+	double scale /*= 5.0*/)
 {
 	zero::ZEROSurface surface;
-	if (surface.PoissonMesh(cloud, mesh) == 0)
+	if (surface.PoissonMesh(cloud, mesh, k, r) != 0)
 	{
-		if (surface.mesh_serrior(cloud, mesh) == 0)
-		//if (1)
-		{
-			return 0;
-		}
-		else
-		{
-			return 1;
-		}
+		return 1;
+	}
+	if (!flag)
+	{
+		return 0;
+	}
+	if (surface.mesh_serrior(cloud, mesh, scale) == 0)
+	{
+		return 0;
 	}
 	else
 	{

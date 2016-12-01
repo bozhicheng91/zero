@@ -20,8 +20,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_Zero_t {
-    QByteArrayData data[26];
-    char stringdata0[455];
+    QByteArrayData data[28];
+    char stringdata0[480];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -55,7 +55,9 @@ QT_MOC_LITERAL(21, 394, 17), // "IndexChoseClicked"
 QT_MOC_LITERAL(22, 412, 16), // "QTreeWidgetItem*"
 QT_MOC_LITERAL(23, 429, 4), // "item"
 QT_MOC_LITERAL(24, 434, 5), // "count"
-QT_MOC_LITERAL(25, 440, 14) // "RefreshStarbar"
+QT_MOC_LITERAL(25, 440, 14), // "RefreshStarbar"
+QT_MOC_LITERAL(26, 455, 12), // "YesTriggered"
+QT_MOC_LITERAL(27, 468, 11) // "NoTriggered"
 
     },
     "Zero\0OpenCloudFileTriggered\0\0"
@@ -69,7 +71,8 @@ QT_MOC_LITERAL(25, 440, 14) // "RefreshStarbar"
     "MeasureTriggered\0PolePointTriggered\0"
     "CenterTriggered\0CentroidTriggered\0"
     "CloudMessageTriggered\0IndexChoseClicked\0"
-    "QTreeWidgetItem*\0item\0count\0RefreshStarbar"
+    "QTreeWidgetItem*\0item\0count\0RefreshStarbar\0"
+    "YesTriggered\0NoTriggered"
 };
 #undef QT_MOC_LITERAL
 
@@ -79,7 +82,7 @@ static const uint qt_meta_data_Zero[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      21,   14, // methods
+      23,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -87,27 +90,29 @@ static const uint qt_meta_data_Zero[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,  119,    2, 0x09 /* Protected */,
-       3,    0,  120,    2, 0x09 /* Protected */,
-       4,    0,  121,    2, 0x09 /* Protected */,
-       5,    0,  122,    2, 0x09 /* Protected */,
-       6,    0,  123,    2, 0x09 /* Protected */,
-       7,    0,  124,    2, 0x09 /* Protected */,
-       8,    0,  125,    2, 0x09 /* Protected */,
-       9,    0,  126,    2, 0x09 /* Protected */,
-      10,    0,  127,    2, 0x09 /* Protected */,
-      11,    0,  128,    2, 0x09 /* Protected */,
-      12,    0,  129,    2, 0x09 /* Protected */,
-      13,    0,  130,    2, 0x09 /* Protected */,
-      14,    0,  131,    2, 0x09 /* Protected */,
-      15,    0,  132,    2, 0x09 /* Protected */,
-      16,    0,  133,    2, 0x09 /* Protected */,
-      17,    0,  134,    2, 0x09 /* Protected */,
-      18,    0,  135,    2, 0x09 /* Protected */,
-      19,    0,  136,    2, 0x09 /* Protected */,
-      20,    0,  137,    2, 0x09 /* Protected */,
-      21,    2,  138,    2, 0x09 /* Protected */,
-      25,    0,  143,    2, 0x09 /* Protected */,
+       1,    0,  129,    2, 0x09 /* Protected */,
+       3,    0,  130,    2, 0x09 /* Protected */,
+       4,    0,  131,    2, 0x09 /* Protected */,
+       5,    0,  132,    2, 0x09 /* Protected */,
+       6,    0,  133,    2, 0x09 /* Protected */,
+       7,    0,  134,    2, 0x09 /* Protected */,
+       8,    0,  135,    2, 0x09 /* Protected */,
+       9,    0,  136,    2, 0x09 /* Protected */,
+      10,    0,  137,    2, 0x09 /* Protected */,
+      11,    0,  138,    2, 0x09 /* Protected */,
+      12,    0,  139,    2, 0x09 /* Protected */,
+      13,    0,  140,    2, 0x09 /* Protected */,
+      14,    0,  141,    2, 0x09 /* Protected */,
+      15,    0,  142,    2, 0x09 /* Protected */,
+      16,    0,  143,    2, 0x09 /* Protected */,
+      17,    0,  144,    2, 0x09 /* Protected */,
+      18,    0,  145,    2, 0x09 /* Protected */,
+      19,    0,  146,    2, 0x09 /* Protected */,
+      20,    0,  147,    2, 0x09 /* Protected */,
+      21,    2,  148,    2, 0x09 /* Protected */,
+      25,    0,  153,    2, 0x09 /* Protected */,
+      26,    0,  154,    2, 0x09 /* Protected */,
+      27,    0,  155,    2, 0x09 /* Protected */,
 
  // slots: parameters
     QMetaType::Void,
@@ -130,6 +135,8 @@ static const uint qt_meta_data_Zero[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 22, QMetaType::Int,   23,   24,
+    QMetaType::Void,
+    QMetaType::Void,
     QMetaType::Void,
 
        0        // eod
@@ -162,6 +169,8 @@ void Zero::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void *
         case 18: _t->CloudMessageTriggered(); break;
         case 19: _t->IndexChoseClicked((*reinterpret_cast< QTreeWidgetItem*(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
         case 20: _t->RefreshStarbar(); break;
+        case 21: _t->YesTriggered(); break;
+        case 22: _t->NoTriggered(); break;
         default: ;
         }
     }
@@ -192,13 +201,13 @@ int Zero::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 21)
+        if (_id < 23)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 21;
+        _id -= 23;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 21)
+        if (_id < 23)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 21;
+        _id -= 23;
     }
     return _id;
 }

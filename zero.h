@@ -5,7 +5,7 @@
 #include <vtkRenderWindow.h>
 
 #include <QtWidgets/QMainWindow>
-#include <QDockWidget>  
+#include <QDebug>
 #include "ui_zero.h"
 #include "src/modules/Zero_Common.h"
 #include "src/modules/Zero_IO.h"
@@ -29,8 +29,8 @@ private:
 protected:
 	void opencloudfilethread();
 	void openmeshfilethread();
-	void savecloudthread();
-	void savemeshthread();
+	void savecloudthread(std::string filename);
+	void savemeshthread(std::string filename);
 	void voxelgridsimplifythread();
 	void uniformsimplifythread();
 	void outlierremovethread();
@@ -39,7 +39,7 @@ protected:
 	void smoothnormalthread();
 	void originicpthread();
 	void ndticpthread();
-	void pclpossisonthread(pcl::PolygonMesh::Ptr mesh);
+	void pclpossisonthread(int k, double r, bool flag, double scale);
 	void pclfastthread();
 	void measurethread();
 	void polepointthread();
@@ -47,11 +47,6 @@ protected:
 	void centroidthread();
 	void cloudmessagethread();
 	void DeleteModel();
-
-
-	void pclpoissonParaSet();
-
-
 
 	protected slots:
 	void OpenCloudFileTriggered();
@@ -75,15 +70,37 @@ protected:
 	void CloudMessageTriggered();
 	void IndexChoseClicked(QTreeWidgetItem *item, int count);
 	void RefreshStarbar();
+	void YesTriggered();
+	void NoTriggered();
 
 protected:
 	void keyPressEvent(QKeyEvent *keyevent);
 	void keyReleaseEvent(QKeyEvent *keyevent);
-
+	
+	// 创建参数面板
+protected:
+	void VoxelGridSimplifyPanel();
+	void UniformSimplifyPanel();
+	void OutlierRemovePanel();
+	void UpSamplifyPanel();
+	void ComputerNormalPanel();
+	void SmoothNormalPanel();
+	void OriginICPPanel();
+	void NDTICPPanel();
+	void PCLPossisonPanel();
+	void PCLFastPanel();
+	void YesButtonClicked();
+	void NoButtonClicked();
+	void ClearLayout(QLayout *layout);
+	QLabel *AddLabel(QString labelname, QString text, int i, int j);
+	QDoubleSpinBox *AddDoubleSpinBox(QString objectname, double min, double max, double defaultValue, int i, int j);
+	QSpinBox *AddSpinBox(QString objectname, int min, int max, int defaultValue, int i, int j);
+	void AddYesNoButton(int i);
 
 private:
 	int GetModelTypeCount(std::string modeltype);
 	void PCTRGB2PCT(PCTRGB& cloud_rgb, PCT& cloud);
+	static bool endsWith(const std::string& str, const std::string& substr);
 	
 
 private:
@@ -117,7 +134,18 @@ private:
 	std::stringstream m_ss;
 	// 日志信息
 	std::string m_log_message;
+	
+	//progressBar message
+	int m_progressBarValue;
+	int m_progressBarState;
 
+	QSpinBox *m_spinbox1;
+	QDoubleSpinBox *m_doublespinbox1;
+	QDoubleSpinBox *m_doublespinbox2;
+	QDoubleSpinBox *m_doublespinbox3;
+	QCheckBox *m_checkbox1;
+	QPushButton *m_yesbutton;
+	QPushButton *m_nobutton;
 };
 
 #endif // ZERO_H

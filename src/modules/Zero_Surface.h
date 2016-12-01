@@ -4,6 +4,7 @@
 
 #include "src/modules/Zero_exports.h"
 #include "src/modules/Zero_Common.h"
+#include "src/modules/Zero_Pretreatment.h"
 
 namespace zero
 {
@@ -20,9 +21,9 @@ namespace zero
 			double max_surface_angle,
 			bool keep_normal);
 
-		int PoissonMesh(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PolygonMesh &mesh);
+		int PoissonMesh(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PolygonMesh &mesh, int k, double r);
 
-		int mesh_serrior(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_orig, pcl::PolygonMesh& mesh);
+		int mesh_serrior(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_orig, pcl::PolygonMesh& mesh, double scale);
 
 	private:
 		double compute_clouds_mean_distance(pcl::PointCloud<pcl::PointNormal> &cloud,
@@ -42,7 +43,11 @@ namespace zero
 		// ≤¥À…÷ÿΩ®
 		
 		int PCLPossionReconstruct(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
-			pcl::PolygonMesh& mesh);
+			pcl::PolygonMesh& mesh,
+			int k = 30,
+			double r = 0,
+			bool flag = false,
+			double scale = 5.0);
 	}
 }
 
