@@ -17,204 +17,256 @@ namespace zero
 		void zeroicp(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
 			pcl::IterativeClosestPoint<PointT, PointT> &icp,
-			double iterations,
-			double ecul_fit,
-			double trans_eps,
+			int iterations,
 			double corrd_dis)
 		{
 			icp.setMaximumIterations(iterations);
-			icp.setInputSource(source.makeShared());
-			icp.setInputTarget(target.makeShared());
+			icp.setInputSource(target.makeShared());
+			icp.setInputTarget(source.makeShared());
 			icp.setMaxCorrespondenceDistance(corrd_dis); // 设置对应点对之间的最大距离(此值对配准结果影响较大)
-			icp.setEuclideanFitnessEpsilon(ecul_fit); // 设置收敛条件是均方误差和小于阈值，停止迭代，当迭代次数不为1时，才有用
-			icp.setTransformationEpsilon(trans_eps); // 设置两次变化矩阵之间的插值(一般设置为1e-10即可)
-			icp.align(source);
-		}
-		// 预处理source后ICP算法
-		template<typename PointT>
-		void zeropretreatsourceicp(pcl::PointCloud<PointT>& source,
-			pcl::PointCloud<PointT>& target,
-			double iterations,
-			double ecul_fit,
-			double trans_eps)
-		{
-			pcl::PointCloud<PointT>::Ptr simplify_source(new pcl::PointCloud<PointT>);
-			pcl::PointCloud<PointT>::Ptr backup_source(new pcl::PointCloud<PointT>);
-			*backup_source = source;
-			if (source.points.size() > 10000)
-			{
-				zero::zeropretreatment::VoxelGridSimplify(*backup_source, *simplify_source);
-				std::cout << "source simplify:" << simplify_source->points.size() << std::endl;
-			}
-
-			double corrd_dis = 1000 * compute_coord_dis(source, target);
-			pcl::IterativeClosestPoint<PointT, PointT> icp;
-			zero::zeroregistration::ICP(*simplify_source, target, icp, iterations, ecul_fit, trans_eps, corrd_dis);
-			std::cout << "icp test\n";
-
-			pcl::transformPointCloud(*backup_source, source, icp.getFinalTransformation());
+			icp.setEuclideanFitnessEpsilon(0.00001); // 设置收敛条件是均方误差和小于阈值，停止迭代，当迭代次数不为1时，才有用
+			icp.setTransformationEpsilon(1e-10); // 设置两次变化矩阵之间的插值(一般设置为1e-10即可)
+			icp.align(target);
 		}
 		// 预处理source与target后ICP算法
 		template<typename PointT>
 		void zeropretreatsourcetargeticp(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
-			double iterations,
-			double ecul_fit,
-			double trans_eps)
+			int iterations)
 		{
 			pcl::PointCloud<PointT>::Ptr simplify_source(new pcl::PointCloud<PointT>);
 			pcl::PointCloud<PointT>::Ptr simplify_target(new pcl::PointCloud<PointT>);
-			pcl::PointCloud<PointT>::Ptr backup_source(new pcl::PointCloud<PointT>);
-			*backup_source = source;
-			pcl::PointCloud<PointT>::Ptr backup_target(new pcl::PointCloud<PointT>);
-			*backup_target = target;
+			
 			if (source.points.size() > 10000)
 			{
-				zero::zeropretreatment::VoxelGridSimplify(*backup_source, *simplify_source);
+				zero::zeropretreatment::VoxelGridSimplify(source, *simplify_source);
+			}
+			else
+			{
+				*simplify_source = source;
 			}
 			if (target.points.size() > 10000)
 			{
-				zero::zeropretreatment::VoxelGridSimplify(*backup_target, *simplify_target);
+				zero::zeropretreatment::VoxelGridSimplify(target, *simplify_target);
+			}
+			else
+			{
+				*simplify_target = target;
 			}
 
-			double corrd_dis = 1000 * compute_coord_dis(*simplify_source, *simplify_target);
+			double corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
 			pcl::IterativeClosestPoint<PointT, PointT> icp;
-			zero::zeroregistration::ICP(*simplify_source, *simplify_target, icp, iterations, corrd_dis);
-			
-			pcl::transformPointCloud(*backup_source, source, icp.getFinalTransformation());
+			zero::zeroregistration::ICP(*simplify_source, *simplify_target, icp, 1, corrd_dis);
+
+			int i = 0;
+			double before_fit = icp.getFitnessScore();
+			double after_fit = before_fit;
+			while (i < iterations)
+			{
+				double dfit = icp.getFitnessScore();
+				if (dfit <= 1e-6)
+				{
+					break;
+				}
+				if (i != 0 && i % 10 == 0)
+				{
+					after_fit = icp.getFitnessScore();
+					if (before_fit - after_fit <= 1e-6)
+					{
+						break;
+					}
+					else
+					{
+						before_fit = after_fit;
+					}
+				}
+				corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
+				icp.setMaxCorrespondenceDistance(corrd_dis);
+				icp.align(*simplify_target);
+				i++;
+			}	
+			pcl::PointCloud<PointT>::Ptr new_target(new pcl::PointCloud<PointT>);
+			*new_target = target;
+			target.clear();
+			pcl::transformPointCloud(*new_target, target, icp.getFinalTransformation());
 		}
 		// NDT配准(效果不如ICP好)
 		template<typename PointT>
 		void zerondt(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
 			pcl::NormalDistributionsTransform<PointT, PointT> &ndt,
-			double iterations,
+			int iterations,
 			double resolution,
-			double trans_eps,
 			double stepsize)
 		{
 			ndt.setMaximumIterations(iterations);
 			// 设置voxel grid的分辨率，也就是体素大小
 			ndt.setResolution(resolution);
 			// 设置两次变换的最大允许差异
-			ndt.setTransformationEpsilon(trans_eps);
+			ndt.setTransformationEpsilon(1e-10);
 			// 设置或改变牛顿线搜索的最大步长
 			ndt.setStepSize(stepsize);
-			ndt.setInputSource(source.makeShared());
-			ndt.setInputTarget(target.makeShared());
-			ndt.align(source);
-		}
-		template<typename PointT>
-		void zeropretreatsourcendt(pcl::PointCloud<PointT>& source,
-			pcl::PointCloud<PointT>& target,
-			double iterations,
-			double resolution,
-			double trans_eps,
-			double stepsize)
-		{
-			pcl::PointCloud<PointT>::Ptr simplify_source(new pcl::PointCloud<PointT>);
-			pcl::PointCloud<PointT>::Ptr backup_source(new pcl::PointCloud<PointT>);
-			*backup_source = source;
-			if (source.points.size() > 10000)
-			{
-				zero::zeropretreatment::VoxelGridSimplify(*backup_source, *simplify_source);
-			}
-
-			pcl::NormalDistributionsTransform<PointT, PointT> ndt;
-			zero::zeroregistration::NDT(*simplify_source, target, ndt, iterations, resolution, trans_eps, stepsize);
-
-			pcl::transformPointCloud(*backup_source, source, ndt.getFinalTransformation());
+			ndt.setInputSource(target.makeShared());
+			ndt.setInputTarget(source.makeShared());
+			ndt.align(target);
 		}
 		template<typename PointT>
 		void zeropretreatsourcetargetndt(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
-			double iterations,
+			int iterations,
 			double resolution,
-			double trans_eps,
 			double stepsize)
 		{
 			pcl::PointCloud<PointT>::Ptr simplify_source(new pcl::PointCloud<PointT>);
 			pcl::PointCloud<PointT>::Ptr simplify_target(new pcl::PointCloud<PointT>);
-			pcl::PointCloud<PointT>::Ptr backup_source(new pcl::PointCloud<PointT>);
-			*backup_source = source;
-			pcl::PointCloud<PointT>::Ptr backup_target(new pcl::PointCloud<PointT>);
-			*backup_target = target;
 			if (source.points.size() > 10000)
 			{
-				zero::zeropretreatment::VoxelGridSimplify(*backup_source, *simplify_source);
+				zero::zeropretreatment::VoxelGridSimplify(source, *simplify_source);
+			}
+			else
+			{
+				*simplify_source = source;
 			}
 			if (target.points.size() > 10000)
 			{
-				zero::zeropretreatment::VoxelGridSimplify(*backup_target, *simplify_target);
+				zero::zeropretreatment::VoxelGridSimplify(target, *simplify_target);
+			}
+			else
+			{
+				*simplify_target = target;
 			}
 
 			pcl::NormalDistributionsTransform<PointT, PointT> ndt;
-			zero::zeroregistration::NDT(*simplify_source, *simplify_target, ndt, iterations, resolution, trans_eps, stepsize);
-
-			pcl::transformPointCloud(*backup_source, source, ndt.getFinalTransformation());
+			zero::zeroregistration::NDT(*simplify_source, *simplify_target, ndt, iterations, resolution, stepsize);
+			pcl::transformPointCloud(target, target, ndt.getFinalTransformation());
 		}
 		// GICP广义ICP算法（效果时间都不如ICP好）
 		template<typename PointT>
-		void zeropretreatsourcegicp(pcl::PointCloud<PointT>& source,
+		void zeropretreatsourcetargetgicp(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
-			double iterations)
+			int iterations)
 		{
 			pcl::PointCloud<PointT>::Ptr simplify_source(new pcl::PointCloud<PointT>);
-			pcl::PointCloud<PointT>::Ptr backup_source(new pcl::PointCloud<PointT>);
-			*backup_source = source;
+			pcl::PointCloud<PointT>::Ptr simplify_target(new pcl::PointCloud<PointT>);
 			if (source.points.size() > 10000)
 			{
-				zero::zeropretreatment::VoxelGridSimplify(*backup_source, *simplify_source);
+				zero::zeropretreatment::VoxelGridSimplify(source, *simplify_source);
+			}
+			else
+			{
+				*simplify_source = source;
+			}
+			if (target.points.size() > 10000)
+			{
+				zero::zeropretreatment::VoxelGridSimplify(target, *simplify_target);
+			}
+			else
+			{
+				*simplify_target = target;
 			}
 			
-			double corrd_dis = 1000 * compute_coord_dis(source, target);
+			double corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
 
 			pcl::GeneralizedIterativeClosestPoint<PointT, PointT> gicp;
-			gicp.setInputSource(simplify_source);
-			gicp.setInputTarget(target.makeShared());
-			gicp.setMaximumIterations(iterations);
+			gicp.setInputSource(simplify_target);
+			gicp.setInputTarget(simplify_source);
+			gicp.setMaximumIterations(1);
 			gicp.setMaxCorrespondenceDistance(corrd_dis);
-			gicp.align(*simplify_source);
+			gicp.align(*simplify_target);
 
-			pcl::transformPointCloud(*backup_source, source, gicp.getFinalTransformation());
+			int i = 0;
+			double before_fit = gicp.getFitnessScore();
+			double after_fit = before_fit;
+			while (i < iterations)
+			{
+				double dfit = gicp.getFitnessScore();
+				if (dfit <= 1e-5)
+				{
+					break;
+				}
+				if (i != 0 && i % 10 == 0)
+				{
+					after_fit = gicp.getFitnessScore();
+					if (before_fit - after_fit <= 1e-5)
+					{
+						break;
+					}
+					else
+					{
+						before_fit = after_fit;
+					}
+				}
+				corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
+				gicp.setMaxCorrespondenceDistance(corrd_dis);
+				gicp.align(*simplify_target);
+				i++;
+			}
+
+			pcl::transformPointCloud(target, target, gicp.getFinalTransformation());
 		}
 		// ICP NONLINEAR算法（未测试）
 		template<typename PointNT>
-		void zeropretreatsourceicpnonlinear(pcl::PointCloud<PointNT>& source,
+		void zeropretreatsourcetargeticpnonlinear(pcl::PointCloud<PointNT>& source,
 			pcl::PointCloud<PointNT>& target,
-			double iterations,
+			int iterations,
 			double trans_eps)
 		{
-			pcl::PointCloud<PointNT>::Ptr simplify_source(new pcl::PointCloud<PointNT>);
-			pcl::PointCloud<PointNT>::Ptr backup_source(new pcl::PointCloud<PointNT>);
-			*backup_source = source;
+			pcl::PointCloud<PointT>::Ptr simplify_source(new pcl::PointCloud<PointT>);
+			pcl::PointCloud<PointT>::Ptr simplify_target(new pcl::PointCloud<PointT>);
 			if (source.points.size() > 10000)
 			{
-				zero::zeropretreatment::VoxelGridSimplify(*backup_source, *simplify_source);
+				zero::zeropretreatment::VoxelGridSimplify(source, *simplify_source);
 			}
-			double corrd_dis = 1000 * compute_coord_dis(source, target);
+			else
+			{
+				*simplify_source = source;
+			}
+			if (target.points.size() > 10000)
+			{
+				zero::zeropretreatment::VoxelGridSimplify(target, *simplify_target);
+			}
+			else
+			{
+				*simplify_target = target;
+			}
+			double corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
 
 			pcl::IterativeClosestPointNonLinear<PointNT, PointNT> icp;
-			icp.setInputSource(simplify_source);
-			icp.setInputTarget(target.makeShared());
-			icp.setMaximumIterations(iterations);
+			icp.setInputSource(simplify_target);
+			icp.setInputTarget(simplify_source);
+			icp.setMaximumIterations(1);
 			icp.setMaxCorrespondenceDistance(corrd_dis);
-			//icp.setPointRepresentation(mypointrepresentation);
-			icp.align(*simplify_source);
+			icp.align(*simplify_target);
 
-			pcl::transformPointCloud(*backup_source, source, icp.getFinalTransformation());
-		}
+			int i = 0;
+			double before_fit = icp.getFitnessScore();
+			double after_fit = before_fit;
+			while (i < iterations)
+			{
+				double dfit = icp.getFitnessScore();
+				if (dfit <= 1e-5)
+				{
+					break;
+				}
+				if (i != 0 && i % 10 == 0)
+				{
+					after_fit = icp.getFitnessScore();
+					if (before_fit - after_fit <= 1e-5)
+					{
+						break;
+					}
+					else
+					{
+						before_fit = after_fit;
+					}
+				}
+				corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
+				icp.setMaxCorrespondenceDistance(corrd_dis);
+				icp.align(*simplify_target);
+				i++;
+			}
 
-	private:
-		template<typename PointT> 
-		double compute_distance_between_clouds(pcl::PointCloud<PointT>& source, 
-			pcl::PointCloud<PointT>& target)
-		{
-			PointT centroid_s, centroid_t;
-			zero::zerocommon::Compute3dCenter(source, centroid_s);
-			zero::zerocommon::Compute3dCenter(target, centroid_t);
-
-			return (zero::zerocommon::ComputePDistance(centroid_s, centroid_t));
+			pcl::transformPointCloud(target, target, icp.getFinalTransformation());
 		}
 	};
 
@@ -225,78 +277,50 @@ namespace zero
 		void ICP(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
 			pcl::IterativeClosestPoint<PointT, PointT> &icp,
-			double iterations = 30,
-			double ecul_fit = 0.001,
-			double trans_eps = 1e-10,
-			double corrd_dis = 100)
+			int iterations = 30,
+			double corrd_dis = 1.0)
 		{
 			zero::ZERORegistration r;
-			r.zeroicp(source, target, icp, iterations, ecul_fit, trans_eps, corrd_dis);
-		}
-		// 预处理source后ICP算法
-		template<typename PointT>
-		void PretreatSourceICP(pcl::PointCloud<PointT>& source,
-			pcl::PointCloud<PointT>& target,
-			double iterations = 30,
-			double ecul_fit = 0.001,
-			double trans_eps = 1e-10)
-		{
-			zero::ZERORegistration r;
-			r.zeropretreatsourceicp(source, target, iterations, ecul_fit, trans_eps);
+			r.zeroicp(source, target, icp, iterations, corrd_dis);
 		}
 		// 预处理source与target后ICP算法
 		template<typename PointT>
 		void PretreatSourceTargetICP(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
-			double iterations = 30,
-			double ecul_fit = 0.001,
-			double trans_eps = 1e-10)
+			int iterations = 30)
 		{
 			zero::ZERORegistration r;
-			r.zeropretreatsourcetargeticp(source, target, iterations, ecul_fit, trans_eps);
+			r.zeropretreatsourcetargeticp(source, target, iterations);
 		}
 		// NDT配准
 		template<typename PointT>
 		void NDT(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
 			pcl::NormalDistributionsTransform<PointT, PointT> &ndt,
-			double iterations = 40,
+			int iterations = 40,
 			double resolution = 1.0,
-			double trans_eps = 0.01,
 			double stepsize = 0.1)
 		{
 			zero::ZERORegistration r;
-			r.zerondt(source, target, ndt, iterations, resolution, trans_eps, stepsize);
-		}
-		template<typename PointT>
-		void PretreatSourceNDT(pcl::PointCloud<PointT>& source,
-			pcl::PointCloud<PointT>& target,
-			double iterations = 40,
-			double resolution = 1.0,
-			double trans_eps = 0.01,
-			double stepsize = 0.1)
-		{
-			zero::ZERORegistration r;
-			r.zeropretreatsourcendt(source, target, iterations, resolution, trans_eps, stepsize);
+			r.zerondt(source, target, ndt, iterations, resolution, stepsize);
 		}
 		template<typename PointT>
 		void PretreatSourceTargetNDT(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
-			double iterations = 40,
+			int iterations = 40,
 			double resolution = 1.0,
-			double trans_eps = 0.01,
 			double stepsize = 0.1)
 		{
 			zero::ZERORegistration r;
-			r.zeropretreatsourcetargetndt(source, target, iterations, resolution, trans_eps, stepsize);
+			r.zeropretreatsourcetargetndt(source, target, iterations, resolution, stepsize);
 		}
 		template<typename PointT>
-		void PretreatSourceGICP(pcl::PointCloud<PointT>& source,
+		void PretreatSourceTargetGICP(pcl::PointCloud<PointT>& source,
 			pcl::PointCloud<PointT>& target,
-			double iterations = 30)
+			int iterations = 30)
 		{
 			zero::ZERORegistration r;
-			r.zeropretreatsourcegicp(source, target, iterations);
+			r.zeropretreatsourcetargetgicp(source, target, iterations);
 		}
 	}
 }

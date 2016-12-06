@@ -1,33 +1,46 @@
 #include "stdafx.h"
 #include "src/modules/Zero_Surface.h"
 
-int zero::ZEROSurface::zerospeedtriangulation(pcl::PointCloud<pcl::PointNormal>& cloud_with_normal, pcl::PolygonMesh& triangles,/* 存储最终三角化的网格模型 */ double mu, double k, double max_surface_angle, bool keep_normal)
+int zero::ZEROSurface::zerospeedtriangulation(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
+	pcl::PolygonMesh& triangles,/* 存储最终三角化的网格模型 */ 
+	int k, 
+	double r, 
+	double scale,
+	double max_surface_angle, 
+	bool keep_normal)
 {
-	if (cloud_with_normal.size() <= 3)
+	if (cloud->size() <= 3)
 	{
 		return (1);
 	}
 
+	double min, max;
+	zero::zerocommon::pointcloudmaxmind(*cloud, max, min);
+	double d = max;
+	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+	zero::zeropretreatment::ComputeCloudNormal(*cloud, *normals, k, r);
+
+	pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normal(new pcl::PointCloud<pcl::PointNormal>);
+	pcl::concatenateFields(*cloud, *normals, *cloud_with_normal);
+
 	// 定义搜索树
 	pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree(new pcl::search::KdTree<pcl::PointNormal>);
-	kdtree->setInputCloud(cloud_with_normal.makeShared());
-
-	double d = compute_clouds_mean_distance(cloud_with_normal, *kdtree);
+	kdtree->setInputCloud(cloud_with_normal);
 
 	pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;// 定义三角化对象
 	// 设置连接点之间的最大距离（即三角形最大边长）
-	gp3.setSearchRadius(d * 1000);
+	gp3.setSearchRadius(d * 100000 * scale);
 	// 设置样本点与其近邻点的最远距离
-	gp3.setMu(mu);
-
-	gp3.setMaximumNearestNeighbors(k);
-
-	gp3.setMaximumSurfaceAngle(max_surface_angle);
+	gp3.setMu(d * 10000 * scale);
+	gp3.setMaximumNearestNeighbors(100);
+	// 最大面的角度
+	double angle = max_surface_angle / 180 * M_PI;
+	gp3.setMaximumSurfaceAngle(angle);
 	gp3.setMinimumAngle(M_PI / 18);
-	gp3.setMaximumAngle(M_PI / 3);
+	gp3.setMaximumAngle(2 * M_PI / 3);
 	gp3.setNormalConsistency(false);
 
-	gp3.setInputCloud(cloud_with_normal.makeShared());
+	gp3.setInputCloud(cloud_with_normal);
 	gp3.setSearchMethod(kdtree);
 	gp3.reconstruct(triangles);
 
@@ -68,7 +81,6 @@ int zero::ZEROSurface::PoissonMesh(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
 	poissonInstance->setOutputPolygons(false);
 	poissonInstance->setIsoDivide(8);
 	poissonInstance->setSamplesPerNode(4);
-	//poissonInstance->performReconstruction(mesh);
 	poissonInstance->reconstruct(mesh);
 
 	return 0;
@@ -140,31 +152,16 @@ int zero::ZEROSurface::mesh_serrior(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_or
 	return (0);
 }
 
-double zero::ZEROSurface::compute_clouds_mean_distance(pcl::PointCloud<pcl::PointNormal> &cloud,
-	pcl::search::KdTree<pcl::PointNormal>& tree)
-{
-	double d = 0.0;
-	int k = 2;
-	std::vector<int> Idx(k);
-	std::vector<float> Dis(k);
-	for (size_t i = 0; i < cloud.size(); i++)
-	{
-		if (tree.nearestKSearch(cloud.points[i], k, Idx, Dis) > 0)
-		{
-			if (d < Dis[1])
-				d += Dis[1];
-			Idx.clear();
-			Dis.clear();
-		}
-	}
-
-	return (d / cloud.size());
-}
-
-int zero::zerosurface::SpeedTriangulation(pcl::PointCloud<pcl::PointNormal>& cloud_with_normal, pcl::PolygonMesh& mesh,/* 存储最终三角化的网格模型 */ double mu /*= 2.5*/, double k /*= 20*/, double max_surface_angle /*= M_PI / 4*/, bool keep_normal /*= false*/)
+int zero::zerosurface::SpeedTriangulation(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
+	pcl::PolygonMesh& mesh,/* 存储最终三角化的网格模型 */ 
+	int k,
+	double r,
+	double d,
+	double max_surface_angle,
+	bool keep_normal)
 {
 	zero::ZEROSurface surface;
-	return surface.zerospeedtriangulation(cloud_with_normal, mesh, mu, k, max_surface_angle, keep_normal);
+	return surface.zerospeedtriangulation(cloud, mesh, k, r, d, max_surface_angle, keep_normal);
 }
 
 int zero::zerosurface::PCLPossionReconstruct(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, 

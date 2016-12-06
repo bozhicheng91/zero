@@ -65,7 +65,7 @@ namespace zero
 		//然后，假想结果符合一个中值为u标准差为a的高斯分布
 		// 删除中值距离在[u-a, u+a]范围外的点
 		template<typename PointT>
-		void staticaloutlierremoval(const pcl::PointCloud<PointT>& cloud_in,
+		int staticaloutlierremoval(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			int k,
 			double mt,
@@ -79,10 +79,11 @@ namespace zero
 			sor.filter(cloud_out);
 			//pcl::IndicesPtr indices;
 			//indices = sor.getRemovedIndices();
+			return 0;
 		}
 		// VoxeGrid下采样，均匀精简(已验证)
 		template<typename PointT> 
-		void voxelgridsimplify(const pcl::PointCloud<PointT>& cloud_in,
+		int voxelgridsimplify(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			double scale)
 		{
@@ -98,6 +99,8 @@ namespace zero
 			approximate_voxel_filter.setLeafSize(xs, ys, zs);
 			approximate_voxel_filter.setInputCloud(cloud_in.makeShared());
 			approximate_voxel_filter.filter(cloud_out);
+
+			return 0;
 		}
 		// 统一采样(已验证)
 		template<typename PointT>
@@ -114,7 +117,7 @@ namespace zero
 		// 该方法属于插值法，结果并不是100%正确，但是
 		// PCL利用移动最小二乘曲面算法
 		template<typename PointT>
-		void upsampling(pcl::PointCloud<PointT>& cloud,
+		int upsampling(pcl::PointCloud<PointT>& cloud,
 			pcl::PointCloud<PointT>& cloud_filtered,
 			double kr,
 			double ur,
@@ -133,6 +136,7 @@ namespace zero
 			filter.setUpsamplingRadius(ur);
 			filter.setUpsamplingStepSize(stepsize);
 			filter.process(cloud_filtered);
+			return (0);
 		}
 		// 计算某个点的法向量(已验证)
 		template<typename PointT>
@@ -168,14 +172,23 @@ namespace zero
 			int k,
 			double r)
 		{
+			if (k > 10)
+			{
+				r = 0.0;
+			}
+			if (r <= 1e-5 && k < 10)
+			{
+				k = 20;
+			}
+
 			pcl::NormalEstimation<PointT, pcl::Normal> ne;
 			ne.setInputCloud(cloud.makeShared());
 			pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>());
 			ne.setSearchMethod(tree);
-			if (k < 2)
+			if (k < 3)
 				ne.setRadiusSearch(r);
 
-			if (r < 1e-10)
+			if (r <= 1e-10)
 				ne.setKSearch(k);
 			Eigen::Vector4f centriod;
 			pcl::compute3DCentroid(cloud, centriod);
@@ -261,23 +274,36 @@ namespace zero
 		}
 		// 移除离群点
 		template<typename PointT>
-		void StaticalPOutlierRemoval(const pcl::PointCloud<PointT>& cloud_in,
+		int StaticalPOutlierRemoval(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			const int K = 50,
 			const double mt = 1.0,
 			const bool outliter_flag = false)
 		{
 			zero::ZEROPretreatment p;
-			p.staticaloutlierremoval(cloud_in, cloud_out, K, mt, outliter_flag);
+			;
+			if (p.staticaloutlierremoval(cloud_in, cloud_out, K, mt, outliter_flag) != 0)
+			{
+				return 1;
+			}
+			else
+				return 0;
 		}
 		// VoxeGrid下采样，均匀精简
 		template<typename PointT>
-		void VoxelGridSimplify(const pcl::PointCloud<PointT>& cloud_in,
+		int VoxelGridSimplify(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			double scale = 0.5)
 		{
 			zero::ZEROPretreatment p;
-			p.voxelgridsimplify(cloud_in, cloud_out, scale);
+			if (p.voxelgridsimplify(cloud_in, cloud_out, scale) != 0)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
 		}
 		// 统一采样
 		template<typename PointT>
@@ -292,14 +318,21 @@ namespace zero
 		// 该方法属于插值法，结果并不是100%正确，但是
 		// PCL利用移动最小二乘曲面算法
 		template<typename PointT>
-		void UpSampling(pcl::PointCloud<PointT>& cloud,
+		int UpSampling(pcl::PointCloud<PointT>& cloud,
 			pcl::PointCloud<PointT>& cloud_filtered,
 			double kr = 0.01,
 			double ur = 0.01,
 			double stepsize = 0.01)
 		{
 			zero::ZEROPretreatment p;
-			p.upsampling(cloud, cloud_filtered, kr, ur, stepsize);
+			if (p.upsampling(cloud, cloud_filtered, kr, ur, stepsize) != 0)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
 		}
 		// 计算某个点的法向量
 		template<typename PointT>

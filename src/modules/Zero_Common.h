@@ -78,6 +78,38 @@ namespace zero
 
 			return (d / cloud.size());
 		}
+
+		// 点云相邻点之间的最大最小距离
+		template<typename PointT>
+		void PointCloudMaxMinD(pcl::PointCloud<PointT> &cloud, double& maxd, double& mind)
+		{
+			pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
+			tree->setInputCloud(cloud.makeShared());
+
+			int K = 2;
+			std::vector<int> Idx(K);
+			std::vector<float> Distance(K);
+			double max = DBL_MIN, min = DBL_MAX;
+			for (size_t i = 0; i < cloud.size(); i++)
+			{
+				if (tree->nearestKSearch(cloud.points[i], K, Idx, Distance) > 0)
+				{
+					if (min > Distance[1])
+					{
+						min = Distance[1];
+					}
+					if (max < Distance[1])
+					{
+						max = Distance[1];
+					}
+				}
+				std::vector<int>(Idx).swap(Idx);
+				std::vector<float>(Distance).swap(Distance);
+			}
+
+			maxd = max;
+			mind = min;
+		}
 	};
 
 	namespace zerocommon
@@ -142,6 +174,31 @@ namespace zero
 			d = common.PointCloudMeanD(cloud);
 
 			return d;
+		}
+
+		// 点云相邻两点的最大最小距离
+		template<typename PointT>
+		void pointcloudmaxmind(pcl::PointCloud<PointT> &cloud, double& maxd, double& mind)
+		{
+			if (cloud.size() == 0)
+			{
+				return;
+			}
+
+			zero::ZEROCommon common;
+			common.PointCloudMaxMinD(cloud, maxd, mind);
+		}
+
+		// 计算两个点云的中心距
+		template<typename PointT>
+		double computedisclouds(pcl::PointCloud<PointT>& source,
+			pcl::PointCloud<PointT>& target)
+		{
+			PointT centroid_s, centroid_t;
+			zero::zerocommon::Compute3dCenter(source, centroid_s);
+			zero::zerocommon::Compute3dCenter(target, centroid_t);
+
+			return (zero::zerocommon::ComputePDistance(centroid_s, centroid_t));
 		}
 	}
 }
