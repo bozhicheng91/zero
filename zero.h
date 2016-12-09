@@ -31,11 +31,11 @@ protected:
 	void savecloudthread(std::string filename);
 	void savemeshthread(std::string filename);
 	void voxelgridsimplifythread(double scale);
-	void uniformsimplifythread();
+	void uniformsimplifythread(double r);
 	void outlierremovethread(int k, double threshold ,bool outlier_flag = false);
 	void upsamplifythread(double kr , double ur , double stepsize );
-	void computernormalthread();
-	void smoothnormalthread();
+	void computernormalthread(int k, double r);
+	void smoothnormalthread(bool normal_f, bool polynomialfit, double r);
 	void originicpthread(int iterations, bool flag);
 	void ndticpthread();
 	void pclpossisonthread(int k, double r, bool flag, double scale);
@@ -116,16 +116,23 @@ private:
 	int m_choose_model_index;
 	// 当前操作点云索引
 	int m_choose_cloud_index;
+	//当前操作法向索引
+	int m_choose_normal_index;
 	// 多个点云
 	std::vector<PCTRGB::Ptr> m_clouds;
+	//多个点云与法向
+	std::vector<PCTRGBN::Ptr> m_clouds_with_normals;
 	// 当前操作三角网格索引
 	int m_choose_mesh_index;
 	// 多个三角网格
 	std::vector<pcl::PolygonMesh::Ptr> m_meshs;
 	// 打开文件的列表
 	QStringList m_openfile_list;
+
+	/*样点属性信息*/
 	// 极大值点、极小值点、质心、中心
 	PCTRGB::Ptr m_points;
+	double m_meanDistance;
 
 	// 操作索引
 	int m_opreator_index;
@@ -146,6 +153,7 @@ private:
 	QDoubleSpinBox *m_doublespinbox3;
 	QLineEdit *m_lineedit1, *m_lineedit2;
 	QCheckBox *m_checkbox1;
+	QCheckBox *m_checkbox2;
 	QPushButton *m_yesbutton;
 	QPushButton *m_nobutton;
 };

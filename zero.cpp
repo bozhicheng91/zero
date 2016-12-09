@@ -252,12 +252,17 @@ void Zero::voxelgridsimplifythread(double scale)
 	voxelgridsim_success = 1;
 }
 
-void Zero::uniformsimplifythread()
+void Zero::uniformsimplifythread(double r)
 {
-	uniformsim_success = 0;
-
-
-	voxelgridsim_success = 1;
+	
+	PCTRGB::Ptr cloud(new PCTRGB);
+	if (zero::zeropretreatment::UniformSimplify(*m_clouds[m_choose_cloud_index], *cloud, r) != 0)
+	{
+		uniformsim_success = -1;
+		return;
+	}
+	m_clouds.push_back(cloud);
+	uniformsim_success = 1;
 }
 
 void Zero::outlierremovethread(int k, double threshold, bool outlier_flag )
@@ -288,18 +293,34 @@ void Zero::upsamplifythread(double kr = 0.01,double ur = 0.01,double stepsize = 
 	
 }
 
-void Zero::computernormalthread()
+void Zero::computernormalthread(int k, double r)
 {
-	computenormal_success = 0;
+	
+	PCTN::Ptr normal(new PCTN);
+	PCTRGBN::Ptr cloud_with_normal(new PCTRGBN);
+	if (zero::zeropretreatment::ComputeCloudNormal(*m_clouds[m_choose_cloud_index], *normal, k, r) != 0)
+	{
+		computenormal_success = -1;
+		return;
+	}
 
+	pcl::concatenateFields(*m_clouds[m_choose_cloud_index], *normal, *cloud_with_normal);
+	m_clouds_with_normals.push_back(cloud_with_normal);
 	computenormal_success = 1;
 }
 
-void Zero::smoothnormalthread()
+void Zero::smoothnormalthread(bool normal_f, bool polynomialfit, double r)
 {
-	smoothnormal_success = 0;
+	PCTRGBN::Ptr cloud_with_normal(new PCTRGBN);
+	//PCT::Ptr cloud(new PCT);
+	//PCTRGB2PCT(*m_clouds[m_choose_cloud_index], *cloud);
 
-
+	if (zero::zeropretreatment::SmoothingNormal(*m_clouds[m_choose_cloud_index], *cloud_with_normal, normal_f, polynomialfit, r) != 0)
+	{
+		smoothnormal_success = -1;
+		return;
+	}
+	m_clouds_with_normals.push_back(cloud_with_normal);
 	smoothnormal_success = 1;
 }
 
@@ -462,7 +483,7 @@ void Zero::DeleteModel()
 
 	int i;
 	string modeltype = m_models[m_choose_model_index];
-	if (modeltype.compare("cloud") == 0)
+	if (modeltype.compare("cloud") == 0)//所选索引为点模型
 	{
 		m_ss.str("");
 		m_ss << "cloud" << m_choose_cloud_index;
@@ -481,7 +502,7 @@ void Zero::DeleteModel()
 			i++;
 		}
 	}
-	if (modeltype.compare("mesh") == 0)
+	if (modeltype.compare("mesh") == 0)//所选索引为网格模型
 	{
 		m_ss.str("");
 		m_ss << "mesh" << m_choose_mesh_index;
@@ -500,6 +521,24 @@ void Zero::DeleteModel()
 		}
 	}
 	
+	if (modeltype.compare("normal") == 0)//所选索引为法向模型
+	{
+		m_ss.str("");
+		m_ss << "normal" << m_choose_normal_index;
+		m_pclviewer->removePointCloud(m_ss.str());
+		ui->pclviewerwidget->update();
+		std::vector<PCTRGBN::Ptr>::iterator Iter;
+		i = 0;
+		for (Iter = m_clouds_with_normals.begin(); Iter != m_clouds_with_normals.end(); Iter++)
+		{
+			if (i == m_choose_normal_index)
+			{
+				m_clouds_with_normals.erase(Iter);
+				break;
+			}
+			i++;
+		}
+	}
 	map<int, string>::iterator mapiter;
 	i = 0;
 	for (mapiter = m_models.begin(); mapiter != m_models.end(); mapiter++)
@@ -661,8 +700,20 @@ void Zero::VoxelGridSimplifyTriggered()
 
 void Zero::UniformSimplifyTriggered()
 {
-
+	if (m_clouds.size() == 0)
+	{
+		return;
+	}
+	if (m_clouds[m_choose_cloud_index]->size() < 3)
+	{
+		ui->statusBar->clearMessage();
+		ui->statusBar->showMessage(QStringLiteral("统一精简时发生错误，点云点数小于3！"));
+		m_log_message = m_zhcode->fromUnicode(QStringLiteral("统一精简时发生错误，点云点数小于3！")).data();
+		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+		return;
+	}
 	m_opreator_index = 6;
+	UniformSimplifyPanel();
 }
 
 void Zero::OutlierRemoveTriggered()
@@ -704,14 +755,38 @@ void Zero::UpSamplifyTriggered()
 
 void Zero::ComputerNormalTriggered()
 {
-
+	if (m_clouds.size() == 0)
+	{
+		return;
+	}
+	if (m_clouds[m_choose_cloud_index]->size() < 3)
+	{
+		ui->statusBar->clearMessage();
+		ui->statusBar->showMessage(QStringLiteral("法向估计时发生错误，点云点数小于3！"));
+		m_log_message = m_zhcode->fromUnicode(QStringLiteral("法向估计时发生错误，点云点数小于3！")).data();
+		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+		return;
+	}
 	m_opreator_index = 9;
+	ComputerNormalPanel();
 }
 
 void Zero::SmoothNormalTriggered()
 {
-
+	if (m_clouds.size() == 0)
+	{
+		return;
+	}
+	if (m_clouds[m_choose_cloud_index]->size() < 3)
+	{
+		ui->statusBar->clearMessage();
+		ui->statusBar->showMessage(QStringLiteral("光滑点云法向时发生错误，点云点数小于3！"));
+		m_log_message = m_zhcode->fromUnicode(QStringLiteral("光滑点云法向时发生错误，点云点数小于3！")).data();
+		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+		return;
+	}
 	m_opreator_index = 10;
+	SmoothNormalPanel();
 }
 
 void Zero::OriginICPTriggered()
@@ -855,7 +930,19 @@ void Zero::IndexChoseClicked(QTreeWidgetItem *item, int count)
 		m_choose_mesh_index = n - 1;
 		m_ss << "mesh" << m_choose_mesh_index;
 	}
-	
+	if (modeltype.compare("normal") == 0)
+	{
+		for (int i = 0; i <= m_choose_model_index; i++)
+		{
+			std::string mtype = m_models[i];
+			if (mtype.compare("normal") == 0)
+			{
+				n++;
+			}
+		}
+		m_choose_normal_index = n - 1;
+		m_ss << "normal" << m_choose_normal_index;
+	}
 
 	if (item->checkState(0) == Qt::Unchecked)
 	{
@@ -867,6 +954,11 @@ void Zero::IndexChoseClicked(QTreeWidgetItem *item, int count)
 		{
 			m_pclviewer->removePolygonMesh(m_ss.str());
 		}
+		if (modeltype.compare("normal") == 0)
+		{
+			m_pclviewer->removePointCloud(m_ss.str());
+		}
+
 	}
 	if (item->checkState(0) == Qt::Checked)
 	{
@@ -877,6 +969,10 @@ void Zero::IndexChoseClicked(QTreeWidgetItem *item, int count)
 		if (modeltype.compare("mesh") == 0)
 		{
 			m_pclviewer->addPolygonMesh(*m_meshs[m_choose_mesh_index], m_ss.str());
+		}
+		if (modeltype.compare("normal") == 0)
+		{
+			m_pclviewer->addPointCloudNormals<pcl::PointXYZRGBNormal>(m_clouds_with_normals[m_choose_normal_index]->makeShared(), 10, m_meanDistance, m_ss.str());
 		}
 	}
 	m_pclviewer->updateCamera();
@@ -1080,6 +1176,76 @@ void Zero::RefreshStarbar()
 		return;
 
 	}
+	//统一精简
+	if (m_opreator_index == 6)
+	{
+		if (!global_flag && !yesflag && !noflag)
+		{
+			return;
+		}
+		if (noflag)
+		{
+			ui->parameterdockWidget->hide();
+			noflag = false;
+			yesflag = false;
+			m_opreator_index = 0;
+			global_flag = false;
+			return;
+		}
+		if (yesflag)
+		{
+			double r = m_doublespinbox1->text().toDouble();
+			ui->parameterdockWidget->hide();
+			noflag = false;
+			yesflag = false;
+			global_flag = true;
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("正在统一精简 ..."));
+			std::thread meshtd(&Zero::uniformsimplifythread, this, r);
+			meshtd.detach();
+		}
+		if (uniformsim_success == 0)
+		{
+			return;
+		}
+		if (uniformsim_success == 1)
+		{
+			QTreeWidgetItem *choose_item = ui->treeWidget->topLevelItem(m_choose_model_index);
+			QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget, QStringList(choose_item->text(0)));
+			item->setCheckState(0, Qt::Checked);
+			m_models[m_models.size()] = "cloud";
+
+
+			int n = GetModelTypeCount("cloud");
+			m_ss.str("");
+			m_ss << "cloud" << n - 1;
+			m_pclviewer->addPointCloud(m_clouds[m_clouds.size() - 1], m_ss.str());
+
+			ui->pclviewerwidget->update();
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("统一精简结束!"));
+			m_log_message = m_zhcode->fromUnicode(QStringLiteral("统一精简结束!")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+		}
+		if (uniformsim_success == -1)
+		{
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("统一精简失败!"));
+			m_log_message = m_zhcode->fromUnicode(QStringLiteral("统一精简失败!")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+
+
+		}
+
+		m_opreator_index = 0;
+		uniformsim_success = -1;
+		global_flag = false;
+		return;
+
+
+
+
+	}
 	// 移除离群点
 	if (m_opreator_index == 7)
 	{
@@ -1148,7 +1314,7 @@ void Zero::RefreshStarbar()
 		global_flag = false;
 		return;
 	}
-
+	//上采样
 	if (m_opreator_index == 8)
 	{
 
@@ -1221,6 +1387,163 @@ void Zero::RefreshStarbar()
 		
 
 	}
+	//计算法向
+	if (m_opreator_index == 9)
+	{
+		if (!global_flag && !yesflag && !noflag)
+		{
+			return;
+		}
+
+		if (noflag)
+		{
+			ui->parameterdockWidget->hide();
+			noflag = false;
+			yesflag = false;
+			m_opreator_index = 0;
+			global_flag = false;
+			return;
+		}
+		if (yesflag)
+		{
+			double k = m_spinbox1->text().toInt();
+			double r = m_doublespinbox1->text().toDouble();
+			ui->parameterdockWidget->hide();
+			noflag = false;
+			yesflag = false;
+			global_flag = true;
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("正在对所选点集计算法向 ..."));
+			std::thread meshtd(&Zero::computernormalthread, this, k, r);
+			meshtd.detach();
+		}
+		if (computenormal_success == 0)
+		{
+			return;
+		}
+		if (computenormal_success == 1)
+		{
+
+			QTreeWidgetItem *choose_item = ui->treeWidget->topLevelItem(m_choose_model_index);
+			QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget, QStringList(choose_item->text(0)));
+			item->setCheckState(0, Qt::Checked);
+			m_models[m_models.size()] = "normal";
+
+
+			int n = GetModelTypeCount("normal");
+			m_ss.str("");
+			m_ss << "normal" << n - 1;
+
+			//求出点云平均距离
+			m_meanDistance = zero::zerocommon::pointcloudmeand(*m_clouds[m_clouds.size() - 1]);
+			
+			m_pclviewer->addPointCloudNormals<pcl::PointXYZRGBNormal>(m_clouds_with_normals[m_clouds_with_normals.size() - 1], 10, 5 * m_meanDistance, m_ss.str());
+
+			ui->pclviewerwidget->update();
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("法向估计结束!"));
+			m_log_message = m_zhcode->fromUnicode(QStringLiteral("法向估计结束!")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+		}
+
+		if (computenormal_success == -1)
+		{
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("法向估计失败!"));
+			m_log_message = m_zhcode->fromUnicode(QStringLiteral("法向估计失败")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+
+
+		}
+		m_opreator_index = 0;
+		computenormal_success = -1;
+		global_flag = false;
+		return;
+	}
+	//光顺法向
+	if (m_opreator_index == 10)
+	{
+		if (!global_flag && !yesflag && !noflag)
+		{
+			return;
+		}
+
+		if (noflag)
+		{
+			ui->parameterdockWidget->hide();
+			noflag = false;
+			yesflag = false;
+			m_opreator_index = 0;
+			global_flag = false;
+			return;
+		}
+		if (yesflag)
+		{
+			bool norm_flag = false;
+			if (m_checkbox1->isChecked())
+			{
+				norm_flag = true;
+			}
+			bool polynorm_flag = false;
+			if (m_checkbox2->isChecked())
+			{
+				polynorm_flag = true;
+			}
+		
+			double r = m_doublespinbox1->text().toDouble();
+			ui->parameterdockWidget->hide();
+			noflag = false;
+			yesflag = false;
+			global_flag = true;
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("正在对所选点集进行光顺计算 ..."));
+			std::thread meshtd(&Zero::smoothnormalthread, this, norm_flag, polynorm_flag, r);
+			meshtd.detach();
+		}
+		if (smoothnormal_success == 0)
+		{
+			return;
+		}
+		if (smoothnormal_success == 1)
+		{
+
+			QTreeWidgetItem *choose_item = ui->treeWidget->topLevelItem(m_choose_model_index);
+			QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget, QStringList(choose_item->text(0)));
+			item->setCheckState(0, Qt::Checked);
+			m_models[m_models.size()] = "normal";
+
+
+			int n = GetModelTypeCount("normal");
+			m_ss.str("");
+			m_ss << "normal" << n - 1;
+
+			//求出点云平均距离
+			m_meanDistance = zero::zerocommon::pointcloudmeand(*m_clouds[m_clouds.size() - 1]);
+
+			m_pclviewer->addPointCloudNormals<pcl::PointXYZRGBNormal>(m_clouds_with_normals[m_clouds_with_normals.size() - 1], 10, 5 * m_meanDistance, m_ss.str());
+
+			ui->pclviewerwidget->update();
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("光顺过程结束!"));
+			m_log_message = m_zhcode->fromUnicode(QStringLiteral("光顺过程结束!")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+		}
+
+		if (smoothnormal_success == -1)
+		{
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("光顺过程失败!"));
+			m_log_message = m_zhcode->fromUnicode(QStringLiteral("光顺过程失败")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+
+
+		}
+		m_opreator_index = 0;
+		smoothnormal_success = -1;
+		global_flag = false;
+		return;
+	}
+
 			
 	// ICP配准
 	if (m_opreator_index == 11)
@@ -1623,7 +1946,15 @@ void Zero::VoxelGridSimplifyPanel()
 
 void Zero::UniformSimplifyPanel()
 {
+	ClearLayout(ui->gridLayout);
+	QLabel *labelr = AddLabel("labelr", "采样半径");
+	m_doublespinbox1 = AddDoubleSpinBox("doublespinboxscale", 0.00, 20.0, 0.5);
+	ui->gridLayout->addWidget(labelr, 0, 0);
+	ui->gridLayout->addWidget(m_doublespinbox1, 0, 1);
 
+	AddYesNoButton(1);
+	uniformsim_success = 0;
+	ui->parameterdockWidget->show();
 }
 
 void Zero::OutlierRemovePanel()
@@ -1677,11 +2008,46 @@ void Zero::UpSamplifyPanel()
 
 void Zero::ComputerNormalPanel()
 {
+	ClearLayout(ui->gridLayout);
+	QLabel *labelk = AddLabel("labelk", "搜索近邻点数");
+	ui->gridLayout->addWidget(labelk, 0, 0);
+	m_spinbox1 = AddSpinBox("spinboxk", 0, 100, 20);
+	ui->gridLayout->addWidget(m_spinbox1, 0, 1);
+
+	QLabel *labelr = AddLabel("labelscale", "搜索半径");
+	m_doublespinbox1 = AddDoubleSpinBox("doublespinboxscale", 0.00, 20.0, 1.0);
+	ui->gridLayout->addWidget(labelr, 1, 0);
+	ui->gridLayout->addWidget(m_doublespinbox1, 1, 1);
+
+	AddYesNoButton(2);
+
+	computenormal_success = 0;
+	ui->parameterdockWidget->show();
 
 }
 
 void Zero::SmoothNormalPanel()
 {
+	ClearLayout(ui->gridLayout);
+	QLabel *labelkr = AddLabel("labelkr", "近邻搜索半径");
+	m_doublespinbox1 = AddDoubleSpinBox("doublespinboxscale", 0.00, 20.0, 1.0);
+	ui->gridLayout->addWidget(labelkr, 0, 0);
+	ui->gridLayout->addWidget(m_doublespinbox1, 0, 1);
+
+	QLabel *labelnormal_f = AddLabel("labelnormal_f", "是否保存法向信息");
+	m_checkbox1 = AddCheckBox("labelnormal_f");
+	ui->gridLayout->addWidget(labelnormal_f, 1, 0);
+	ui->gridLayout->addWidget(m_checkbox1, 1, 1);
+
+	QLabel *labelpolynomialfit_f = AddLabel("labelpolynomialfit_f", "是否封闭");
+	m_checkbox2 = AddCheckBox("labelpolynomialfit_f");
+	ui->gridLayout->addWidget(labelpolynomialfit_f, 2, 0);
+	ui->gridLayout->addWidget(m_checkbox2, 2, 1);
+
+	AddYesNoButton(3);
+	smoothnormal_success = 0;
+	m_opreator_index = 10;
+	ui->parameterdockWidget->show();
 
 }
 
@@ -1879,13 +2245,19 @@ void Zero::EmptyDataViewer()
 	{
 		m_clouds[i]->clear();
 	}
+	for (size_t i = 0; i < m_clouds_with_normals.size(); i++)
+	{
+		m_clouds_with_normals[i]->clear();
+	}
+
 	std::vector<PCTRGB::Ptr>().swap(m_clouds);
 	std::vector<pcl::PolygonMesh::Ptr>().swap(m_meshs);
+	std::vector<PCTRGBN::Ptr>().swap(m_clouds_with_normals);
 	m_pclviewer->removeAllPointClouds();
 	m_pclviewer->removeAllShapes();
 	ui->pclviewerwidget->update();
 }
-
+//获取模型类型数量
 int Zero::GetModelTypeCount(std::string modeltype)
 {
 	int n = 0;

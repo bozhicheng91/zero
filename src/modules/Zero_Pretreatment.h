@@ -104,7 +104,7 @@ namespace zero
 		}
 		// 统一采样(已验证)
 		template<typename PointT>
-		void uniformsimplify(const pcl::PointCloud<PointT>& cloud_in,
+		int uniformsimplify(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			double r)
 		{
@@ -112,6 +112,7 @@ namespace zero
 			filter.setInputCloud(cloud_in.makeShared());
 			filter.setRadiusSearch(r);
 			filter.filter(cloud_out);
+			return 0;
 		}
 		// 上采样是曲面重建的一种形式，适用于点数较少的点云(已验证,未得到结果)
 		// 该方法属于插值法，结果并不是100%正确，但是
@@ -167,7 +168,7 @@ namespace zero
 		}
 		// 计算点云的法向量，PCA方法,任何类型点云(已验证)
 		template<typename PointT>
-		void computecloudnormal(const pcl::PointCloud<PointT> &cloud,
+		int computecloudnormal(const pcl::PointCloud<PointT> &cloud,
 			pcl::PointCloud<pcl::Normal>& cloud_normal,
 			int k,
 			double r)
@@ -195,6 +196,7 @@ namespace zero
 			ne.setViewPoint(centriod[0], centriod[1], centriod[2]);
 
 			ne.compute(cloud_normal);
+			return 0;
 		}
 		//计算点云法向量，积分图像法(已验证)
 		template<typename PointT>
@@ -219,14 +221,14 @@ namespace zero
 		}
 		//利用多项式重建光滑点云法向量(已验证，运行效率太慢)
 		template<typename PointT>
-		void smoothingnormal(const pcl::PointCloud<PointT>& cloud,
-			pcl::PointCloud<pcl::PointNormal>& normals,
+		int smoothingnormal(const pcl::PointCloud<PointT>& cloud,
+			pcl::PointCloud<pcl::PointXYZRGBNormal>& normals,
 			bool normal_f,
 			bool polynomialfit_f,
 			double r)
 		{
 			pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
-			pcl::MovingLeastSquares<PointT, pcl::PointNormal> mls;
+			pcl::MovingLeastSquares<PointT, pcl::PointXYZRGBNormal> mls;
 			mls.setComputeNormals(normal_f);
 			mls.setInputCloud(cloud.makeShared());
 			mls.setPolynomialFit(polynomialfit_f);
@@ -234,6 +236,8 @@ namespace zero
 			mls.setSearchRadius(r);
 
 			mls.process(normals);
+
+			return 0;
 		}
 	};
 
@@ -307,12 +311,19 @@ namespace zero
 		}
 		// 统一采样
 		template<typename PointT>
-		void UniformSimplify(const pcl::PointCloud<PointT>& cloud_in,
+		int UniformSimplify(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			double r)
 		{
 			zero::ZEROPretreatment p;
-			p.uniformsimplify(cloud_in, cloud_out, r);
+			if (p.uniformsimplify(cloud_in, cloud_out, r) != 0)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
 		}
 		// 上采样是曲面重建的一种形式，适用于点数较少的点云
 		// 该方法属于插值法，结果并不是100%正确，但是
@@ -346,13 +357,20 @@ namespace zero
 		}
 		// 计算点云的法向量
 		template<typename PointT>
-		void ComputeCloudNormal(const pcl::PointCloud<PointT> &cloud,
+		int ComputeCloudNormal(const pcl::PointCloud<PointT> &cloud,
 			pcl::PointCloud<pcl::Normal>& cloud_normal,
 			int k = 1,
 			double r = 0.0)
 		{
 			zero::ZEROPretreatment p;
-			p.computecloudnormal(cloud, cloud_normal, k, r);
+			if (p.computecloudnormal(cloud, cloud_normal, k, r) != 0)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
 		}
 		// 利用积分图像法计算有序点云法向量
 		template<typename PointT>
@@ -366,14 +384,21 @@ namespace zero
 		}
 		//利用多项式重建光滑点云法向量
 		template<typename PointT>
-		void SmoothingNormal(const pcl::PointCloud<PointT>& cloud,
-			pcl::PointCloud<pcl::PointNormal>& normals,
+		int SmoothingNormal(const pcl::PointCloud<PointT>& cloud,
+			pcl::PointCloud<pcl::PointXYZRGBNormal>& normals,
 			bool normal_f = true,
 			bool polynomialfit_f = true,
 			double r = 0.03)
 		{
 			zero::ZEROPretreatment p;
-			p.smoothingnormal(cloud, normals, normal_f, polynomialfit_f, r);
+			if (p.smoothingnormal(cloud, normals, normal_f, polynomialfit_f, r) != 0)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
 		}
 		//删除点云中的无效点
 		template<typename PointT>

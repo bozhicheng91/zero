@@ -61,6 +61,8 @@ namespace zero
 		template<typename PointT>
 		double PointCloudMeanD(pcl::PointCloud<PointT> &cloud)
 		{
+
+
 			pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
 			tree->setInputCloud(cloud.makeShared());
 			double d = 0.0;
@@ -68,15 +70,16 @@ namespace zero
 			std::vector<int> Idx(K);
 			std::vector<float> Distance(K);
 			//srand(unsigned(time(0)));
+		
 			for (size_t i = 0; i < cloud.size(); i++)
 			{
 				if (tree->nearestKSearch(cloud.points[i], K, Idx, Distance) > 0)
-					d += Distance[1];
+					d += sqrt(Distance[1]);
 				std::vector<int>(Idx).swap(Idx);
 				std::vector<float>(Distance).swap(Distance);
 			}
-
-			return (d / cloud.size());
+			d = d /cloud.size();
+			return (d);
 		}
 
 		// 点云相邻点之间的最大最小距离
