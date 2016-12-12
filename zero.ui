@@ -65,7 +65,7 @@
     </widget>
     <addaction name="menuSimplify"/>
     <addaction name="actionOuliterRemove"/>
-    <addaction name="actionUpSamplify"/>
+    <addaction name="actionUpSample"/>
     <addaction name="actionComputeNormal"/>
     <addaction name="actionSmoothNormal"/>
    </widget>
@@ -230,7 +230,7 @@
     <string>统一精简</string>
    </property>
   </action>
-  <action name="actionUpSamplify">
+  <action name="actionUpSample">
    <property name="text">
     <string>上采样</string>
    </property>

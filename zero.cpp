@@ -50,6 +50,7 @@ void Zero::Init()
 	m_currentPath = QApplication::applicationDirPath();
 	m_choose_model_index = 0;
 	m_choose_cloud_index = 0;
+	m_choose_normal_index = 0;
 	m_choose_mesh_index = 0;
 	m_opreator_index = 0;
 
@@ -94,6 +95,7 @@ void Zero::Signals_Slots()
 	// 光滑法向量
 	connect(ui->actionSmoothNormal, SIGNAL(triggered()), this, SLOT(SmoothNormalTriggered()));
 	//移除离群点
+
 	connect(ui->actionOuliterRemove, SIGNAL(triggered()), this, SLOT(OutlierRemoveTriggered()));
 	// 自动ICP
 	connect(ui->actionOriginICP, SIGNAL(triggered()), this, SLOT(OriginICPTriggered()));
@@ -241,7 +243,6 @@ void Zero::savemeshthread(std::string filename)
 
 void Zero::voxelgridsimplifythread(double scale)
 {
-	
 	PCTRGB::Ptr cloud(new PCTRGB);
 	if (zero::zeropretreatment::VoxelGridSimplify(*m_clouds[m_choose_cloud_index], *cloud, scale) != 0)
 	{
@@ -249,12 +250,12 @@ void Zero::voxelgridsimplifythread(double scale)
 		return;
 	}
 	m_clouds.push_back(cloud);
+
 	voxelgridsim_success = 1;
 }
 
 void Zero::uniformsimplifythread(double r)
 {
-	
 	PCTRGB::Ptr cloud(new PCTRGB);
 	if (zero::zeropretreatment::UniformSimplify(*m_clouds[m_choose_cloud_index], *cloud, r) != 0)
 	{
@@ -262,24 +263,24 @@ void Zero::uniformsimplifythread(double r)
 		return;
 	}
 	m_clouds.push_back(cloud);
-	uniformsim_success = 1;
+
+	voxelgridsim_success = 1;
 }
 
-void Zero::outlierremovethread(int k, double threshold, bool outlier_flag )
+void Zero::outlierremovethread(int k, double threshold, bool outlier_flag)
 {
 	PCTRGB::Ptr cloud(new PCTRGB);
-	//PCT *cloud(new PCT);
-	//PCTRGB2PCT(*m_clouds[m_choose_cloud_index], *cloud);
 	if (zero::zeropretreatment::StaticalPOutlierRemoval(*m_clouds[m_choose_cloud_index], *cloud, k, threshold, outlier_flag) != 0)
 	{
 		outlierremove_success = -1;
 		return;
 	}
 	m_clouds.push_back(cloud);
+
 	outlierremove_success = 1;
 }
 
-void Zero::upsamplifythread(double kr = 0.01,double ur = 0.01,double stepsize = 0.01)
+void Zero::upsamplifythread(double kr = 0.01, double ur = 0.01, double stepsize = 0.01)
 {
 	PCTRGB::Ptr cloud(new PCTRGB);
 
@@ -289,13 +290,12 @@ void Zero::upsamplifythread(double kr = 0.01,double ur = 0.01,double stepsize = 
 		return;
 	}
 	m_clouds.push_back(cloud);
+
 	upsamp_success = 1;
-	
 }
 
 void Zero::computernormalthread(int k, double r)
 {
-	
 	PCTN::Ptr normal(new PCTN);
 	PCTRGBN::Ptr cloud_with_normal(new PCTRGBN);
 	if (zero::zeropretreatment::ComputeCloudNormal(*m_clouds[m_choose_cloud_index], *normal, k, r) != 0)
@@ -306,21 +306,20 @@ void Zero::computernormalthread(int k, double r)
 
 	pcl::concatenateFields(*m_clouds[m_choose_cloud_index], *normal, *cloud_with_normal);
 	m_clouds_with_normals.push_back(cloud_with_normal);
+
 	computenormal_success = 1;
 }
 
 void Zero::smoothnormalthread(bool normal_f, bool polynomialfit, double r)
 {
 	PCTRGBN::Ptr cloud_with_normal(new PCTRGBN);
-	//PCT::Ptr cloud(new PCT);
-	//PCTRGB2PCT(*m_clouds[m_choose_cloud_index], *cloud);
-
 	if (zero::zeropretreatment::SmoothingNormal(*m_clouds[m_choose_cloud_index], *cloud_with_normal, normal_f, polynomialfit, r) != 0)
 	{
 		smoothnormal_success = -1;
 		return;
 	}
 	m_clouds_with_normals.push_back(cloud_with_normal);
+
 	smoothnormal_success = 1;
 }
 
@@ -474,7 +473,7 @@ void Zero::cloudmessagethread()
 
 void Zero::DeleteModel()
 {
-	if (m_choose_model_index < 0)
+	if (ui->treeWidget->topLevelItemCount() <= 0)
 	{
 		return;
 	}
@@ -483,7 +482,7 @@ void Zero::DeleteModel()
 
 	int i;
 	string modeltype = m_models[m_choose_model_index];
-	if (modeltype.compare("cloud") == 0)//所选索引为点模型
+	if (modeltype.compare("cloud") == 0)
 	{
 		m_ss.str("");
 		m_ss << "cloud" << m_choose_cloud_index;
@@ -502,7 +501,7 @@ void Zero::DeleteModel()
 			i++;
 		}
 	}
-	if (modeltype.compare("mesh") == 0)//所选索引为网格模型
+	if (modeltype.compare("mesh") == 0)
 	{
 		m_ss.str("");
 		m_ss << "mesh" << m_choose_mesh_index;
@@ -521,24 +520,6 @@ void Zero::DeleteModel()
 		}
 	}
 	
-	if (modeltype.compare("normal") == 0)//所选索引为法向模型
-	{
-		m_ss.str("");
-		m_ss << "normal" << m_choose_normal_index;
-		m_pclviewer->removePointCloud(m_ss.str());
-		ui->pclviewerwidget->update();
-		std::vector<PCTRGBN::Ptr>::iterator Iter;
-		i = 0;
-		for (Iter = m_clouds_with_normals.begin(); Iter != m_clouds_with_normals.end(); Iter++)
-		{
-			if (i == m_choose_normal_index)
-			{
-				m_clouds_with_normals.erase(Iter);
-				break;
-			}
-			i++;
-		}
-	}
 	map<int, string>::iterator mapiter;
 	i = 0;
 	for (mapiter = m_models.begin(); mapiter != m_models.end(); mapiter++)
@@ -582,7 +563,6 @@ void Zero::OpenCloudFileTriggered()
 
 	EmptyDataViewer();
 
-	ui->progressBar->setRange(0, m_openfile_list.size());
 	ui->statusBar->clearMessage();
 	ui->statusBar->showMessage(QStringLiteral("正在读取数据..."));
 	m_log_message = m_zhcode->fromUnicode(QStringLiteral("正在读取数据...")).data();
@@ -622,7 +602,6 @@ void Zero::OpenMeshFileTriggered()
 	}
 	EmptyDataViewer();
 
-	ui->progressBar->setRange(0, m_openfile_list.size());
 	ui->statusBar->clearMessage();
 	ui->statusBar->showMessage(QStringLiteral("正在读取数据..."));
 	m_log_message = m_zhcode->fromUnicode(QStringLiteral("正在读取数据...")).data();
@@ -712,6 +691,7 @@ void Zero::UniformSimplifyTriggered()
 		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 		return;
 	}
+
 	m_opreator_index = 6;
 	UniformSimplifyPanel();
 }
@@ -730,9 +710,9 @@ void Zero::OutlierRemoveTriggered()
 		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 		return;
 	}
+
 	m_opreator_index = 7;
 	OutlierRemovePanel();
-	
 }
 
 void Zero::UpSamplifyTriggered()
@@ -749,6 +729,7 @@ void Zero::UpSamplifyTriggered()
 		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 		return;
 	}
+
 	m_opreator_index = 8;
 	UpSamplifyPanel();
 }
@@ -767,6 +748,7 @@ void Zero::ComputerNormalTriggered()
 		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 		return;
 	}
+
 	m_opreator_index = 9;
 	ComputerNormalPanel();
 }
@@ -785,6 +767,7 @@ void Zero::SmoothNormalTriggered()
 		WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 		return;
 	}
+
 	m_opreator_index = 10;
 	SmoothNormalPanel();
 }
@@ -930,19 +913,7 @@ void Zero::IndexChoseClicked(QTreeWidgetItem *item, int count)
 		m_choose_mesh_index = n - 1;
 		m_ss << "mesh" << m_choose_mesh_index;
 	}
-	if (modeltype.compare("normal") == 0)
-	{
-		for (int i = 0; i <= m_choose_model_index; i++)
-		{
-			std::string mtype = m_models[i];
-			if (mtype.compare("normal") == 0)
-			{
-				n++;
-			}
-		}
-		m_choose_normal_index = n - 1;
-		m_ss << "normal" << m_choose_normal_index;
-	}
+	
 
 	if (item->checkState(0) == Qt::Unchecked)
 	{
@@ -954,11 +925,6 @@ void Zero::IndexChoseClicked(QTreeWidgetItem *item, int count)
 		{
 			m_pclviewer->removePolygonMesh(m_ss.str());
 		}
-		if (modeltype.compare("normal") == 0)
-		{
-			m_pclviewer->removePointCloud(m_ss.str());
-		}
-
 	}
 	if (item->checkState(0) == Qt::Checked)
 	{
@@ -969,10 +935,6 @@ void Zero::IndexChoseClicked(QTreeWidgetItem *item, int count)
 		if (modeltype.compare("mesh") == 0)
 		{
 			m_pclviewer->addPolygonMesh(*m_meshs[m_choose_mesh_index], m_ss.str());
-		}
-		if (modeltype.compare("normal") == 0)
-		{
-			m_pclviewer->addPointCloudNormals<pcl::PointXYZRGBNormal>(m_clouds_with_normals[m_choose_normal_index]->makeShared(), 10, m_meanDistance, m_ss.str());
 		}
 	}
 	m_pclviewer->updateCamera();
@@ -995,12 +957,14 @@ void Zero::RefreshStarbar()
 		if (opencloudfile_success == 1)
 		{
 			AddFilelist();
+			ui->progressBar->setRange(0, m_openfile_list.size());
 			for (int i = 0; i < m_clouds.size(); i++)
 			{
 				// 显示点云
 				m_ss.str("");
 				m_ss << "cloud" << i;
 				m_pclviewer->addPointCloud(m_clouds[i], m_ss.str());
+				ui->progressBar->setValue(i + 1);
 			}
 			m_pclviewer->resetCamera();
 			ui->pclviewerwidget->update();
@@ -1031,12 +995,14 @@ void Zero::RefreshStarbar()
 		if (openmeshfile_success == 1)
 		{
 			AddFilelist();
+			ui->progressBar->setRange(0, m_openfile_list.size());
 			for (int i = 0; i < m_meshs.size(); i++)
 			{
 				// 显示mesh
 				m_ss.str("");
 				m_ss << "mesh" << i;
 				m_pclviewer->addPolygonMesh(*m_meshs[i], m_ss.str());
+				ui->progressBar->setValue(i + 1);
 			}
 			m_pclviewer->resetCamera();
 			ui->pclviewerwidget->update();
@@ -1273,7 +1239,7 @@ void Zero::RefreshStarbar()
 			global_flag = true;
 			ui->statusBar->clearMessage();
 			ui->statusBar->showMessage(QStringLiteral("正在移除离群点 ..."));
-			std::thread meshtd(&Zero::outlierremovethread, this, k, threshold, outlier_flag );
+			std::thread meshtd(&Zero::outlierremovethread, this, k, threshold, outlier_flag);
 			meshtd.detach();
 		}
 		if (outlierremove_success == 0)
@@ -1301,12 +1267,12 @@ void Zero::RefreshStarbar()
 		}
 		if (outlierremove_success == -1)
 		{
-				ui->statusBar->clearMessage();
-				ui->statusBar->showMessage(QStringLiteral("移除离群点失败!"));
-				m_log_message = m_zhcode->fromUnicode(QStringLiteral("移除离群点失败!")).data();
-				WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
+			ui->statusBar->clearMessage();
+			ui->statusBar->showMessage(QStringLiteral("移除离群点失败!"));
+			m_log_message = m_zhcode->fromUnicode(QStringLiteral("移除离群点失败!")).data();
+			WriteLog(DEBUG_LEVEL, __FILE__, __LINE__, "--------------------Call API: %s", m_log_message);
 
-				
+
 		}
 
 		m_opreator_index = 0;
@@ -1343,7 +1309,7 @@ void Zero::RefreshStarbar()
 			global_flag = true;
 			ui->statusBar->clearMessage();
 			ui->statusBar->showMessage(QStringLiteral("正在对所选点集进行上采样 ..."));
-			std::thread meshtd(&Zero::upsamplifythread, this, kr, ur,step);
+			std::thread meshtd(&Zero::upsamplifythread, this, kr, ur, step);
 			meshtd.detach();
 		}
 		if (upsamp_success == 0)
@@ -1384,7 +1350,7 @@ void Zero::RefreshStarbar()
 		upsamp_success = -1;
 		global_flag = false;
 		return;
-		
+
 
 	}
 	//计算法向
@@ -1436,7 +1402,7 @@ void Zero::RefreshStarbar()
 
 			//求出点云平均距离
 			m_meanDistance = zero::zerocommon::pointcloudmeand(*m_clouds[m_clouds.size() - 1]);
-			
+
 			m_pclviewer->addPointCloudNormals<pcl::PointXYZRGBNormal>(m_clouds_with_normals[m_clouds_with_normals.size() - 1], 10, 5 * m_meanDistance, m_ss.str());
 
 			ui->pclviewerwidget->update();
@@ -1489,7 +1455,7 @@ void Zero::RefreshStarbar()
 			{
 				polynorm_flag = true;
 			}
-		
+
 			double r = m_doublespinbox1->text().toDouble();
 			ui->parameterdockWidget->hide();
 			noflag = false;
@@ -1544,7 +1510,6 @@ void Zero::RefreshStarbar()
 		return;
 	}
 
-			
 	// ICP配准
 	if (m_opreator_index == 11)
 	{
@@ -1941,7 +1906,6 @@ void Zero::VoxelGridSimplifyPanel()
 	AddYesNoButton(1);
 	voxelgridsim_success = 0;
 	ui->parameterdockWidget->show();
-
 }
 
 void Zero::UniformSimplifyPanel()
@@ -2003,7 +1967,6 @@ void Zero::UpSamplifyPanel()
 	AddYesNoButton(3);
 	upsamp_success = 0;
 	ui->parameterdockWidget->show();
-
 }
 
 void Zero::ComputerNormalPanel()
@@ -2023,7 +1986,6 @@ void Zero::ComputerNormalPanel()
 
 	computenormal_success = 0;
 	ui->parameterdockWidget->show();
-
 }
 
 void Zero::SmoothNormalPanel()
@@ -2048,7 +2010,6 @@ void Zero::SmoothNormalPanel()
 	smoothnormal_success = 0;
 	m_opreator_index = 10;
 	ui->parameterdockWidget->show();
-
 }
 
 void Zero::OriginICPPanel()
@@ -2146,16 +2107,6 @@ void Zero::PCLFastPanel()
 	ui->parameterdockWidget->show();
 }
 
-void Zero::YesButtonClicked()
-{
-
-}
-
-void Zero::NoButtonClicked()
-{
-
-}
-
 void Zero::ClearLayout(QLayout *layout)
 {
 	QLayoutItem *item;
@@ -2245,19 +2196,13 @@ void Zero::EmptyDataViewer()
 	{
 		m_clouds[i]->clear();
 	}
-	for (size_t i = 0; i < m_clouds_with_normals.size(); i++)
-	{
-		m_clouds_with_normals[i]->clear();
-	}
-
 	std::vector<PCTRGB::Ptr>().swap(m_clouds);
 	std::vector<pcl::PolygonMesh::Ptr>().swap(m_meshs);
-	std::vector<PCTRGBN::Ptr>().swap(m_clouds_with_normals);
 	m_pclviewer->removeAllPointClouds();
 	m_pclviewer->removeAllShapes();
 	ui->pclviewerwidget->update();
 }
-//获取模型类型数量
+
 int Zero::GetModelTypeCount(std::string modeltype)
 {
 	int n = 0;
@@ -2302,4 +2247,5 @@ void Zero::AddFilelist()
 		item->setCheckState(0, Qt::Checked);
 	}
 	ui->treeWidget->expandAll();
+	ui->treeWidget->topLevelItem(0)->setSelected(true);
 }

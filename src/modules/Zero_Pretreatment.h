@@ -13,28 +13,40 @@ namespace zero
 		~ZERO_EXPORTS ZEROPretreatment() {}
 		// 平面过滤器(已验证)
 		template<typename PointT>
-		void filterpassthrough(const pcl::PointCloud<PointT>& cloud_in,
+		int filterpassthrough(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			std::string name,
 			float min, float max,
 			bool LN_flag)
 		{
+			if (cloud.size() == 0)
+			{
+				return (1);
+			}
+
 			pcl::PassThrough<PointT> pass;
 			pass.setInputCloud(cloud_in.makeShared());
 			pass.setFilterFieldName(name);//过滤的轴向
 			pass.setFilterLimits(min, max);//过滤范围
 			pass.setFilterLimitsNegative(LN_flag);//false得到范围内的点，true得到范围之外的点
 			pass.filter(cloud_out);
+			
+			return 0;
 		}
 		// 条件过滤器,可指定坐标轴、条件(大于小于)、范围(已验证)
 		template<typename PointT>
-		void filterconditional(const pcl::PointCloud<PointT>& cloud_in,
+		int filterconditional(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			std::string name,
 			pcl::ComparisonOps::CompareOp min_flag, float min,
 			pcl::ComparisonOps::CompareOp max_flag, float max,
 			bool keep_organized)
 		{
+			if (cloud.size() == 0)
+			{
+				return (1);
+			}
+
 			pcl::ConditionAnd<PointT>::Ptr range_cond(new
 				pcl::ConditionAnd<PointT>());
 			range_cond->addComparison(pcl::FieldComparison<PointT>::ConstPtr(new
@@ -46,19 +58,28 @@ namespace zero
 			condrem.setInputCloud(cloud_in.makeShared());
 			condrem.setKeepOrganized(keep_organized);
 			condrem.filter(cloud_out);
+
+			return 0;
 		}
 		// 离群点去除，邻域法,从点云中删除r邻域范围内点数小于k的点(已验证)
 		template<typename PointT>
-		void radiusoutlierremoval(const pcl::PointCloud<PointT>& cloud_in,
+		int radiusoutlierremoval(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			double r,
 			int k)
 		{
+			if (cloud.size() == 0)
+			{
+				return (1);
+			}
+
 			pcl::RadiusOutlierRemoval<PointT> outrem;
 			outrem.setInputCloud(cloud_in.makeShared());
 			outrem.setRadiusSearch(r);
 			outrem.setMinNeighborsInRadius(k);
 			outrem.filter(cloud_out);
+
+			return 0;
 		}
 		// 移除离群点，统计离群点去除能够更细化。(已验证)
 		//首先，计算每个点的K近邻中值距离
@@ -71,6 +92,11 @@ namespace zero
 			double mt,
 			bool outliter_flag)
 		{
+			if (cloud_in.size() == 0)
+			{
+				return (1);
+			}
+
 			pcl::StatisticalOutlierRemoval<PointT> sor;
 			sor.setInputCloud(cloud_in.makeShared());
 			sor.setMeanK(k);//设置中心距离估计时k近邻点集个数
@@ -87,6 +113,11 @@ namespace zero
 			pcl::PointCloud<PointT>& cloud_out,
 			double scale)
 		{
+			if (cloud_in.size() == 0)
+			{
+				return (1);
+			}
+
 			// 极大值、极小值点
 			PointT min, max;
 			pcl::getMinMax3D(cloud_in, min, max);
@@ -108,6 +139,11 @@ namespace zero
 			pcl::PointCloud<PointT>& cloud_out,
 			double r)
 		{
+			if (cloud_in.size() == 0)
+			{
+				return (1);
+			}
+
 			pcl::UniformSampling<PointT> filter;
 			filter.setInputCloud(cloud_in.makeShared());
 			filter.setRadiusSearch(r);
@@ -124,6 +160,11 @@ namespace zero
 			double ur,
 			double stepsize)
 		{
+			if (cloud.size() == 0)
+			{
+				return (1);
+			}
+
 			pcl::MovingLeastSquares<PointT, PointT> filter;
 			filter.setInputCloud(cloud.makeShared());
 			pcl::search::KdTree<PointT>::Ptr kdtree;
@@ -137,15 +178,21 @@ namespace zero
 			filter.setUpsamplingRadius(ur);
 			filter.setUpsamplingStepSize(stepsize);
 			filter.process(cloud_filtered);
-			return (0);
+
+			return 0;
 		}
 		// 计算某个点的法向量(已验证)
 		template<typename PointT>
-		void computepointsnormal(const pcl::PointCloud<PointT> &cloud,
+		int computepointsnormal(const pcl::PointCloud<PointT> &cloud,
 			PointT &point,
 			pcl::Normal &normal,
 			int k)
 		{
+			if (cloud.size() == 0)
+			{
+				return (1);
+			}
+
 			std::vector<int> indices(k);
 			std::vector<float> SDistance(k);
 
@@ -165,6 +212,8 @@ namespace zero
 			normal.curvature = curvature;
 			std::vector<float>(SDistance).swap(SDistance);
 			std::vector<int>(indices).swap(indices);
+
+			return 0;
 		}
 		// 计算点云的法向量，PCA方法,任何类型点云(已验证)
 		template<typename PointT>
@@ -173,6 +222,11 @@ namespace zero
 			int k,
 			double r)
 		{
+			if (cloud.size() == 0)
+			{
+				return (1);
+			}
+
 			if (k > 10)
 			{
 				r = 0.0;
@@ -196,15 +250,21 @@ namespace zero
 			ne.setViewPoint(centriod[0], centriod[1], centriod[2]);
 
 			ne.compute(cloud_normal);
+
 			return 0;
 		}
 		//计算点云法向量，积分图像法(已验证)
 		template<typename PointT>
-		void computeintegralimagenormal(const pcl::PointCloud<PointT>& cloud,
+		int computeintegralimagenormal(const pcl::PointCloud<PointT>& cloud,
 			pcl::PointCloud<pcl::Normal>& normal,
 			float df,
 			float smoothsize)
 		{
+			if (cloud.size() == 0)
+			{
+				return (1);
+			}
+
 			pcl::IntegralImageNormalEstimation<PointT, pcl::Normal> ne;
 			ne.setInputCloud(cloud.makeShared());
 			// 其它估计方法: COVARIANCE_MATRIX, AVERAGE_DEPTH_CHANGE, SIMPLE_3D_GRADIENT
@@ -218,11 +278,13 @@ namespace zero
 			// 用于光顺法向量的区域大小影响因子
 			ne.setNormalSmoothingSize(smoothsize);
 			ne.compute(normal);
+
+			return 0;
 		}
 		//利用多项式重建光滑点云法向量(已验证，运行效率太慢)
 		template<typename PointT>
 		int smoothingnormal(const pcl::PointCloud<PointT>& cloud,
-			pcl::PointCloud<pcl::PointXYZRGBNormal>& normals,
+			pcl::PointCloud<pcl::PointXYZRGBNormal>& normals,/*BZC*/
 			bool normal_f,
 			bool polynomialfit_f,
 			double r)
@@ -245,18 +307,23 @@ namespace zero
 	{
 		// 平面过滤器
 		template<typename PointT>
-		void FilterPassThrough(const pcl::PointCloud<PointT>& cloud_in,
+		int FilterPassThrough(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			std::string name,
 			float min, float max,
 			const bool LN_flag = false)
 		{
 			zero::ZEROPretreatment p;
-			p.filterpassthrough(cloud_in, cloud_out, name, min, max, LN_flag);
+			if (p.filterpassthrough(cloud_in, cloud_out, name, min, max, LN_flag) != 0)
+			{
+				return 1;
+			}
+			else
+				return 0;
 		}
 		// 条件过滤器,可指定坐标轴、条件(大于小于)、范围
 		template<typename PointT>
-		void FilterConditional(const pcl::PointCloud<PointT>& cloud_in,
+		int FilterConditional(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			std::string name,
 			pcl::ComparisonOps::CompareOp min_flag, float min,
@@ -264,17 +331,27 @@ namespace zero
 			bool keep_organized = true)
 		{
 			zero::ZEROPretreatment p;
-			p.filterconditional(cloud_in, cloud_out, name, min_flag, min, max_flag, max, keep_organized);
+			if (p.filterconditional(cloud_in, cloud_out, name, min_flag, min, max_flag, max, keep_organized) != 0)
+			{
+				return 1;
+			}
+			else
+				return 0;			
 		}
 		// 离群点去除，邻域法,从点云中删除r邻域范围内点数小于k的点
 		template<typename PointT>
-		void RadiusOutlierRemoval(const pcl::PointCloud<PointT>& cloud_in,
+		int RadiusOutlierRemoval(const pcl::PointCloud<PointT>& cloud_in,
 			pcl::PointCloud<PointT>& cloud_out,
 			double r,
 			int k)
 		{
 			zero::ZEROPretreatment p;
-			p.radiusoutlierremoval(cloud_in, cloud_out, r, k);
+			if (p.radiusoutlierremoval(cloud_in, cloud_out, r, k) != 0)
+			{
+				return 1;
+			}
+			else
+				return 0;
 		}
 		// 移除离群点
 		template<typename PointT>
@@ -285,7 +362,6 @@ namespace zero
 			const bool outliter_flag = false)
 		{
 			zero::ZEROPretreatment p;
-			;
 			if (p.staticaloutlierremoval(cloud_in, cloud_out, K, mt, outliter_flag) != 0)
 			{
 				return 1;
@@ -305,9 +381,7 @@ namespace zero
 				return 1;
 			}
 			else
-			{
-				return 0;
-			}
+				return 0;			
 		}
 		// 统一采样
 		template<typename PointT>
@@ -321,9 +395,7 @@ namespace zero
 				return 1;
 			}
 			else
-			{
 				return 0;
-			}
 		}
 		// 上采样是曲面重建的一种形式，适用于点数较少的点云
 		// 该方法属于插值法，结果并不是100%正确，但是
@@ -341,19 +413,22 @@ namespace zero
 				return 1;
 			}
 			else
-			{
 				return 0;
-			}
 		}
 		// 计算某个点的法向量
 		template<typename PointT>
-		void ComputePointsNormal(pcl::PointCloud<PointT> &cloud,
+		int ComputePointsNormal(pcl::PointCloud<PointT> &cloud,
 			PointT &point,
 			pcl::Normal &normal,
 			const int k = 20)
 		{
 			zero::ZEROPretreatment p;
-			p.computepointsnormal(cloud, point, normal, k);
+			if (p.computepointsnormal(cloud, point, normal, k) != 0)
+			{
+				return 1;
+			}
+			else
+				return 0;
 		}
 		// 计算点云的法向量
 		template<typename PointT>
@@ -363,24 +438,27 @@ namespace zero
 			double r = 0.0)
 		{
 			zero::ZEROPretreatment p;
-			if (p.computecloudnormal(cloud, cloud_normal, k, r) != 0)
+			if (p.computecloudnormal(cloud, cloud_normal, k, r))
 			{
 				return 1;
 			}
 			else
-			{
 				return 0;
-			}
 		}
 		// 利用积分图像法计算有序点云法向量
 		template<typename PointT>
-		void ComputeIntegralImageNormal(const pcl::PointCloud<PointT>& cloud,
+		int ComputeIntegralImageNormal(const pcl::PointCloud<PointT>& cloud,
 			pcl::PointCloud<pcl::Normal>& normal,
 			float df = 0.02f,
 			float smoothsize = 10.0f)
 		{
 			zero::ZEROPretreatment p;
-			p.computeintegralimagenormal(cloud, normal, df, smoothsize);
+			if (p.computeintegralimagenormal(cloud, normal, df, smoothsize) != 0)
+			{
+				return 1;
+			}
+			else
+				return 0;
 		}
 		//利用多项式重建光滑点云法向量
 		template<typename PointT>
@@ -396,9 +474,7 @@ namespace zero
 				return 1;
 			}
 			else
-			{
 				return 0;
-			}
 		}
 		//删除点云中的无效点
 		template<typename PointT>

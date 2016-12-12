@@ -12,6 +12,67 @@ namespace zero
 	public:
 		ZERORegistration() {}
 		~ZERORegistration() {}
+
+		template<typename PointT>
+		void getcorrdinatepoints(pcl::PointCloud<PointT>& cloud, pcl::PointCloud<PointT>& Points)
+		{
+			PointT min, max, center;
+			pcl::getMinMax3D(cloud, min, max);
+			center.x = (min.x + max.x) / 2;
+			center.y = (min.y + max.y) / 2;
+			center.z = (min.z + max.z) / 2;
+
+			/*PT first, second, third, forth, fifth, sixth;
+			first.x = max.x;
+			first.y = min.y;
+			first.z = min.z;
+
+			second.x = max.x;
+			second.y = min.y;
+			second.z = max.z;
+
+			third.x = min.x;
+			third.y = min.y;
+			third.z = max.z;
+
+			forth.x = min.x;
+			forth.y = max.y;
+			forth.z = max.z;
+
+			fifth.x = min.x;
+			fifth.y = max.y;
+			fifth.z = min.z;
+
+			sixth.x = max.x;
+			sixth.y = max.y;
+			sixth.z = min.z;
+			Points.push_back(first);
+			Points.push_back(second);
+			Points.push_back(third);
+			Points.push_back(forth);
+			Points.push_back(fifth);
+			Points.push_back(sixth);*/
+
+			Points.push_back(center);
+			Points.push_back(min);
+			Points.push_back(max);
+		}
+		template<typename PointT>
+		Eigen::Matrix4d firstristeration(pcl::PointCloud<PointT>& cloud_in, 
+			pcl::PointCloud<PointT>& cloud_registration)
+		{
+			pcl::PointCloud<PointT>::Ptr first(new pcl::PointCloud<PointT>);
+			getcorrdinatepoints(cloud_in, *first);
+
+			pcl::PointCloud<PointT>::Ptr second(new pcl::PointCloud<PointT>);
+			getcorrdinatepoints(cloud_registration, *second);
+
+			pcl::registration::TransformationEstimationSVD<PointT, PointT> trans_svd;
+			Eigen::Matrix4f transformSVD = Eigen::Matrix4f::Identity();
+			trans_svd.estimateRigidTransformation(*first, *second, transformSVD);
+
+			return transformSVD.cast<double>();
+		}
 		// ICPÀ„∑®
 		template<typename PointT>
 		void zeroicp(pcl::PointCloud<PointT>& source,
@@ -56,35 +117,8 @@ namespace zero
 
 			double corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
 			pcl::IterativeClosestPoint<PointT, PointT> icp;
-			zero::zeroregistration::ICP(*simplify_source, *simplify_target, icp, 1, corrd_dis);
+			zero::zeroregistration::ICP(*simplify_source, *simplify_target, icp, 100, corrd_dis);
 
-			int i = 0;
-			double before_fit = icp.getFitnessScore();
-			double after_fit = before_fit;
-			while (i < iterations)
-			{
-				double dfit = icp.getFitnessScore();
-				if (dfit <= 1e-6)
-				{
-					break;
-				}
-				if (i != 0 && i % 10 == 0)
-				{
-					after_fit = icp.getFitnessScore();
-					if (before_fit - after_fit <= 1e-6)
-					{
-						break;
-					}
-					else
-					{
-						before_fit = after_fit;
-					}
-				}
-				corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
-				icp.setMaxCorrespondenceDistance(corrd_dis);
-				icp.align(*simplify_target);
-				i++;
-			}	
 			pcl::PointCloud<PointT>::Ptr new_target(new pcl::PointCloud<PointT>);
 			*new_target = target;
 			target.clear();
@@ -170,37 +204,10 @@ namespace zero
 			pcl::GeneralizedIterativeClosestPoint<PointT, PointT> gicp;
 			gicp.setInputSource(simplify_target);
 			gicp.setInputTarget(simplify_source);
-			gicp.setMaximumIterations(1);
+			gicp.setMaximumIterations(iterations);
 			gicp.setMaxCorrespondenceDistance(corrd_dis);
 			gicp.align(*simplify_target);
 
-			int i = 0;
-			double before_fit = gicp.getFitnessScore();
-			double after_fit = before_fit;
-			while (i < iterations)
-			{
-				double dfit = gicp.getFitnessScore();
-				if (dfit <= 1e-5)
-				{
-					break;
-				}
-				if (i != 0 && i % 10 == 0)
-				{
-					after_fit = gicp.getFitnessScore();
-					if (before_fit - after_fit <= 1e-5)
-					{
-						break;
-					}
-					else
-					{
-						before_fit = after_fit;
-					}
-				}
-				corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
-				gicp.setMaxCorrespondenceDistance(corrd_dis);
-				gicp.align(*simplify_target);
-				i++;
-			}
 
 			pcl::transformPointCloud(target, target, gicp.getFinalTransformation());
 		}
@@ -234,37 +241,9 @@ namespace zero
 			pcl::IterativeClosestPointNonLinear<PointNT, PointNT> icp;
 			icp.setInputSource(simplify_target);
 			icp.setInputTarget(simplify_source);
-			icp.setMaximumIterations(1);
+			icp.setMaximumIterations(iterations);
 			icp.setMaxCorrespondenceDistance(corrd_dis);
 			icp.align(*simplify_target);
-
-			int i = 0;
-			double before_fit = icp.getFitnessScore();
-			double after_fit = before_fit;
-			while (i < iterations)
-			{
-				double dfit = icp.getFitnessScore();
-				if (dfit <= 1e-5)
-				{
-					break;
-				}
-				if (i != 0 && i % 10 == 0)
-				{
-					after_fit = icp.getFitnessScore();
-					if (before_fit - after_fit <= 1e-5)
-					{
-						break;
-					}
-					else
-					{
-						before_fit = after_fit;
-					}
-				}
-				corrd_dis = zero::zerocommon::computedisclouds(*simplify_source, *simplify_target);
-				icp.setMaxCorrespondenceDistance(corrd_dis);
-				icp.align(*simplify_target);
-				i++;
-			}
 
 			pcl::transformPointCloud(target, target, icp.getFinalTransformation());
 		}

@@ -49,7 +49,7 @@ typedef pcl::PointXYZ PT;
 typedef pcl::PointXYZRGB PTRGB;
 typedef pcl::PointCloud<PT> PCT;
 typedef pcl::PointCloud<PTRGB> PCTRGB;
-typedef pcl::PointCloud<pcl::Normal> PCTN;
-typedef pcl::PointCloud<pcl::PointNormal> PCTPN;
-typedef pcl::PointCloud<pcl::PointXYZRGBNormal> PCTRGBN;
+typedef pcl::PointCloud<pcl::Normal> PCTN;/*BZC*/
+typedef pcl::PointCloud<pcl::PointNormal> PCTPN;/*BZC*/
+typedef pcl::PointCloud<pcl::PointXYZRGBNormal> PCTRGBN;/*BZC*/
 typedef pcl::visualization::PCLVisualizer PCLViewer;
